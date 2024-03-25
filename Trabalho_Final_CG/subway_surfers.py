@@ -71,10 +71,40 @@ class Example(Base):
         # Gravity parameters
         self.gravity = 0.1
         self.terminal_velocity = 5  # Maximum falling speed
-        self.jumping = False  # Variable to track if the kite is currently jumping
-        self.jump_speed = 1  # Speed at which the kite jumps
-        self.jump_height = 3  # Maximum height of the jump
-        self.jump_duration = 40  # Define the duration of the jump
+        self.jumping = False        # Variable to track if the kite is currently jumping
+        self.jump_speed = 1         # Speed at which the kite jumps
+        self.jump_height = 3        # Maximum height of the jump
+        self.jump_duration = 40     # Define the duration of the jump
+
+    def update(self):
+        if not self.game_over:
+            self.move_obstacles()
+            self.check_collision()
+            self.score += 1
+            self.apply_gravity()  # Apply gravity to the kite
+            if self.lane_switching and pygame.time.get_ticks() - self.switch_timer >= self.switch_delay:
+                self.lane_switching = False
+        else:
+            print(f"Game Over! Your score: {self.score}")
+
+    def run(self):
+        self.initialize()  # Ensure that initialize is called
+        pygame.init()
+        clock = pygame.time.Clock()
+        while not self.game_over:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.game_over = True
+        # Inside the main loop
+            keys = pygame.key.get_pressed()
+            # Pass the 'keys' obtained from pygame.key.get_pressed() to handle_input
+            self.handle_input(keys)
+
+            self.update()
+            self.renderer.render(self.scene, self.camera)
+            pygame.display.flip()
+            clock.tick(60)
+        pygame.quit()
 
     def apply_gravity(self):
         kite_pos = self.kite.get_position()
@@ -182,36 +212,6 @@ class Example(Base):
         # Randomly add a new obstacle
         if len(self.obstacles) < 5 and randint(0, 20) == 0:
             self.add_obstacle()
-
-    def update(self):
-        if not self.game_over:
-            self.move_obstacles()
-            self.check_collision()
-            self.score += 1
-            self.apply_gravity()  # Apply gravity to the kite
-            if self.lane_switching and pygame.time.get_ticks() - self.switch_timer >= self.switch_delay:
-                self.lane_switching = False
-        else:
-            print(f"Game Over! Your score: {self.score}")
-
-    def run(self):
-        self.initialize()  # Ensure that initialize is called
-        pygame.init()
-        clock = pygame.time.Clock()
-        while not self.game_over:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    self.game_over = True
-        # Inside the main loop
-            keys = pygame.key.get_pressed()
-            # Pass the 'keys' obtained from pygame.key.get_pressed() to handle_input
-            self.handle_input(keys)
-
-            self.update()
-            self.renderer.render(self.scene, self.camera)
-            pygame.display.flip()
-            clock.tick(60)
-        pygame.quit()
 
 
 # Instantiate this class and run the program
