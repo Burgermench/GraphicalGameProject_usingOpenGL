@@ -65,36 +65,37 @@ class Example(Base):
         self.kite.set_position([0, 2, 20])  # Initial position of the kite
         self.scene.add(self.kite)
         self.kite_rig.add(self.kite)
-        self.obstacles = []
-        self.score = 0
-        self.game_over = False
-        # Gravity parameters
-        self.gravity = 0.1
-        self.terminal_velocity = 5  # Maximum falling speed
-        self.jumping = False        # Variable to track if the kite is currently jumping
-        self.jump_speed = 1         # Speed at which the kite jumps
-        self.jump_height = 3        # Maximum height of the jump
-        self.jump_duration = 40     # Define the duration of the jump
+        self._obstacles = []
+        self._score = 0
+        self._game_over = False
+        # _Gravity parameters
+        self._gravity = 0.1
+        self._terminal_velocity = 5  # Maximum falling speed
+        self._jumping = False        # Variable to track if the kite is currently _jumping
+        self._jump_speed = 1         # Speed at which the kite jumps
+        self._jump_height = 4        # Maximum height of the jump
+        self._jump_duration = 60     # Define the duration of the jump
+        self._is_stopped = False
 
     def update(self):
-        if not self.game_over:
-            self.move_obstacles()
+        if not self._game_over:
+            self.move__obstacles()
             self.check_collision()
-            self.score += 1
-            self.apply_gravity()  # Apply gravity to the kite
+            self._score += 1
+            self.apply__gravity()  # Apply _gravity to the kite
             if self.lane_switching and pygame.time.get_ticks() - self.switch_timer >= self.switch_delay:
                 self.lane_switching = False
         else:
-            print(f"Game Over! Your score: {self.score}")
+            print(f"Game Over! Your _score: {self._score}")
 
     def run(self):
         self.initialize()  # Ensure that initialize is called
         pygame.init()
         clock = pygame.time.Clock()
-        while not self.game_over:
+        while not self._game_over:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    self.game_over = True
+                    self._game_over = True
         # Inside the main loop
             keys = pygame.key.get_pressed()
             # Pass the 'keys' obtained from pygame.key.get_pressed() to handle_input
@@ -106,21 +107,21 @@ class Example(Base):
             clock.tick(60)
         pygame.quit()
 
-    def apply_gravity(self):
+    def apply__gravity(self):
         kite_pos = self.kite.get_position()
-        if self.jumping:
+        if self._jumping:
             # During jump, update kite's y-position based on jump height
             self.jump_time += 1
             # Adjust jump speed based on duration
-            jump_progress = min(self.jump_time / self.jump_duration, 1)
-            new_y = self.jump_start_y + self.jump_height * \
+            jump_progress = min(self.jump_time / self._jump_duration, 1)
+            new_y = self.jump_start_y + self._jump_height * \
                 math.sin(jump_progress * math.pi)
             self.kite.set_position([kite_pos[0], new_y, kite_pos[2]])
             # End jump if maximum duration reached
-            if self.jump_time >= self.jump_duration:
-                self.jumping = False
-        elif kite_pos[1] > 0:  # Apply gravity only if kite is above the ground
-            new_y = max(0, kite_pos[1] - self.gravity)
+            if self.jump_time >= self._jump_duration:
+                self._jumping = False
+        elif kite_pos[1] > 0:  # Apply _gravity only if kite is above the ground
+            new_y = max(0, kite_pos[1] - self._gravity)
             self.kite.set_position([kite_pos[0], new_y, kite_pos[2]])
 
     def add_obstacle(self):
@@ -134,12 +135,12 @@ class Example(Base):
         # Position far away in the z-axis
         obstacle.set_position([obstacle_x, 0, -20])
         self.scene.add(obstacle)
-        self.obstacles.append(obstacle)
+        self._obstacles.append(obstacle)
 
     def check_collision(self):
         kite_pos = self.kite.get_position()  # Retrieve kite position
         kite_radius = 1  # Adjust the kite radius as needed
-        for obstacle in self.obstacles:
+        for obstacle in self._obstacles:
             obstacle_pos = obstacle.get_position()  # Retrieve obstacle position
             obstacle_radius = 0.005  # Adjust the obstacle radius as needed
             # Calculate the distance between the kite and the obstacle along each axis
@@ -150,7 +151,7 @@ class Example(Base):
             if abs(dx) < kite_radius + obstacle_radius and abs(dy) < kite_radius + obstacle_radius and abs(dz) < kite_radius + obstacle_radius:
                 print(
                     f"Collision detected! Kite position: {kite_pos}, Obstacle position: {obstacle_pos}")
-                self.game_over = True
+                self._game_over = True
                 break  # Exit the loop if a collision is detected
 
     def handle_input(self, keys=None):  # Add 'keys=None' as an argument with default value
@@ -172,8 +173,8 @@ class Example(Base):
                 self.move_to_lane(2)
                 self.lane_switching = True
                 self.switch_timer = pygame.time.get_ticks()
-        if keys[K_UP] and not self.jumping:  # Jump
-            self.jumping = True
+        if keys[K_UP] and not self._jumping:  # Jump
+            self._jumping = True
             self.jump_start_y = self.kite.get_position()[1]
             self.jump_time = 0
         if keys[K_DOWN]:  # Slide
@@ -195,22 +196,22 @@ class Example(Base):
     def slide(self):
         current_pos = self.kite.get_position()
         # Ensure kite doesn't go beneath the ground
-        new_y = max(0, current_pos[1] - self.gravity)
+        new_y = max(0, current_pos[1] - self._gravity)
         self.kite.set_position([current_pos[0], new_y, current_pos[2]])
 
-    def move_obstacles(self):
-        new_obstacles = []
-        for obstacle in self.obstacles:
+    def move__obstacles(self):
+        new__obstacles = []
+        for obstacle in self._obstacles:
             # Move obstacle towards the player using Object3D method
             obstacle.translate(0, 0, 0.2)
-            # Keep obstacles within a certain range
+            # Keep _obstacles within a certain range
             if obstacle.global_position[2] < 30:
-                new_obstacles.append(obstacle)
+                new__obstacles.append(obstacle)
             else:
                 self.scene.remove(obstacle)  # Remove obstacle from the scene if it's too far
-        self.obstacles = new_obstacles
+        self._obstacles = new__obstacles
         # Randomly add a new obstacle
-        if len(self.obstacles) < 5 and randint(0, 20) == 0:
+        if len(self._obstacles) < 5 and randint(0, 20) == 0:
             self.add_obstacle()
 
 
