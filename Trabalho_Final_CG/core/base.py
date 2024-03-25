@@ -15,7 +15,8 @@ class Base:
         pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLEBUFFERS, 1)
         pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLESAMPLES, 4)
         # Use a core OpenGL profile for cross-platform compatibility
-        pygame.display.gl_set_attribute(pygame.GL_CONTEXT_PROFILE_MASK, pygame.GL_CONTEXT_PROFILE_CORE)
+        pygame.display.gl_set_attribute(
+            pygame.GL_CONTEXT_PROFILE_MASK, pygame.GL_CONTEXT_PROFILE_CORE)
         # Create and display the window
         self._screen = pygame.display.set_mode(screen_size, display_flags)
         # Set the text that appears in the title bar of the window
