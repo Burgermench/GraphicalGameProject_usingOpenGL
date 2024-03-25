@@ -1,5 +1,6 @@
 import math
 import pygame
+
 from pygame.locals import *
 from core.base import Base
 from core_ext.camera import Camera
@@ -16,6 +17,7 @@ from random import randint, choice
 
 
 class Example(Base):
+
     def initialize(self):
         self.renderer = Renderer()
         self.scene = Scene()
@@ -26,16 +28,13 @@ class Example(Base):
         self.rig.set_position([0, 2, 25])
         self.lane_switching = False
         self.switch_timer = 0
-        # Adjust the delay time as needed (in milliseconds)
-        self.switch_delay = 175
-
+        self.switch_delay = 175  # Adjust the delay time as needed (in milliseconds)
         # Sky
         sky_geometry = RectangleGeometry(width=250, height=250)
         sky_material = TextureMaterial(texture=Texture(
             file_name="images/sky.jpg"), property_dict={"repeatUV": [5, 5]})
         sky = Mesh(sky_geometry, sky_material)
         self.scene.add(sky)
-
         # Ground and Lanes
         lane_width = 1
         lane_count = 3
@@ -48,7 +47,6 @@ class Example(Base):
         ground.rotate_x(-math.pi/2)
         ground.set_position([0, -0.5, 0])
         self.scene.add(ground)
-
         # floor_temple
         floor_temple_geometry = RectangleGeometry(width=15, height=100)
         floor_temple_material = TextureMaterial(
@@ -58,7 +56,6 @@ class Example(Base):
         # Adjust the y-position to place the floor_temple on top of the grass
         floor_temple.set_position([0, -0.4, 0])
         self.scene.add(floor_temple)
-
         # Kite
         self.kite_rig = MovementRig()
         kite_geometry = MolduraGeometryKite()
@@ -68,15 +65,12 @@ class Example(Base):
         self.kite.set_position([0, 2, 20])  # Initial position of the kite
         self.scene.add(self.kite)
         self.kite_rig.add(self.kite)
-
         self.obstacles = []
         self.score = 0
         self.game_over = False
-
         # Gravity parameters
         self.gravity = 0.1
         self.terminal_velocity = 5  # Maximum falling speed
-
         self.jumping = False  # Variable to track if the kite is currently jumping
         self.jump_speed = 1  # Speed at which the kite jumps
         self.jump_height = 3  # Maximum height of the jump
@@ -84,7 +78,6 @@ class Example(Base):
 
     def apply_gravity(self):
         kite_pos = self.kite.get_position()
-
         if self.jumping:
             # During jump, update kite's y-position based on jump height
             self.jump_time += 1
@@ -93,7 +86,6 @@ class Example(Base):
             new_y = self.jump_start_y + self.jump_height * \
                 math.sin(jump_progress * math.pi)
             self.kite.set_position([kite_pos[0], new_y, kite_pos[2]])
-
             # End jump if maximum duration reached
             if self.jump_time >= self.jump_duration:
                 self.jumping = False
@@ -116,18 +108,14 @@ class Example(Base):
 
     def check_collision(self):
         kite_pos = self.kite.get_position()  # Retrieve kite position
-
         kite_radius = 1  # Adjust the kite radius as needed
-
         for obstacle in self.obstacles:
             obstacle_pos = obstacle.get_position()  # Retrieve obstacle position
-            obstacle_radius = 0.1  # Adjust the obstacle radius as needed
-
+            obstacle_radius = 0.005  # Adjust the obstacle radius as needed
             # Calculate the distance between the kite and the obstacle along each axis
             dx = kite_pos[0] - obstacle_pos[0]
             dy = kite_pos[1] - obstacle_pos[1]
             dz = kite_pos[2] - obstacle_pos[2]
-
             # Check for collision along each axis
             if abs(dx) < kite_radius + obstacle_radius and abs(dy) < kite_radius + obstacle_radius and abs(dz) < kite_radius + obstacle_radius:
                 print(
@@ -139,15 +127,10 @@ class Example(Base):
         if keys is None:
             keys = pygame.key.get_pressed()
         # Camera movement
-        if keys[K_w]:
-            self.rig.move_forward(0.1)
-        if keys[K_s]:
-            self.rig.move_backward(0.1)
-        if keys[K_a]:
-            self.rig.move_left(0.1)
-        if keys[K_d]:
-            self.rig.move_right(0.1)
-
+        if keys[K_w]: self.rig.move_forward(0.1)
+        if keys[K_s]: self.rig.move_backward(0.1)
+        if keys[K_a]: self.rig.move_left(0.1)
+        if keys[K_d]: self.rig.move_right(0.1)
         # Kite movement
         if keys[K_LEFT]:  # Move left
             if not self.lane_switching:
@@ -170,16 +153,12 @@ class Example(Base):
         current_pos = self.kite.get_position()
         lane_width = 2  # Width of each lane
         current_lane = round(current_pos[0] / lane_width)
-
         # Calculate the target lane based on the direction
         target_lane = current_lane + direction
-
         # Ensure the target lane stays within the valid range
         target_lane = max(-1.5, min(1.5, target_lane))
-
         # Calculate the target position based on the target lane
         new_pos_x = target_lane * lane_width
-
         # Move to the target lane directly without considering lane change speed
         self.kite.set_position([new_pos_x, current_pos[1], current_pos[2]])
 
@@ -198,13 +177,10 @@ class Example(Base):
             if obstacle.global_position[2] < 30:
                 new_obstacles.append(obstacle)
             else:
-                # Remove obstacle from the scene if it's too far
-                self.scene.remove(obstacle)
-
+                self.scene.remove(obstacle)  # Remove obstacle from the scene if it's too far
         self.obstacles = new_obstacles
-
         # Randomly add a new obstacle
-        if len(self.obstacles) < 10 and randint(0, 20) == 0:
+        if len(self.obstacles) < 5 and randint(0, 20) == 0:
             self.add_obstacle()
 
     def update(self):
@@ -222,12 +198,10 @@ class Example(Base):
         self.initialize()  # Ensure that initialize is called
         pygame.init()
         clock = pygame.time.Clock()
-
         while not self.game_over:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.game_over = True
-
         # Inside the main loop
             keys = pygame.key.get_pressed()
             # Pass the 'keys' obtained from pygame.key.get_pressed() to handle_input
@@ -237,9 +211,8 @@ class Example(Base):
             self.renderer.render(self.scene, self.camera)
             pygame.display.flip()
             clock.tick(60)
-
         pygame.quit()
 
 
 # Instantiate this class and run the program
-Example(screen_size=[800, 600]).run()
+Example(screen_size=[1920, 1080]).run()
