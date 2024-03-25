@@ -81,6 +81,7 @@ class Example(Base):
         self._jump_duration = 60     # Define the duration of the jump
         self._is_stopped = False
         self._fps = 60
+        self._esc_lock = False
 
     def run(self):
         self.initialize()  # Ensure that initialize is called
@@ -95,8 +96,7 @@ class Example(Base):
             self.update()
             self.renderer.render(self.scene, self.camera)
             pygame.display.flip()
-            if not self._is_stopped:
-                clock.tick(self._fps)
+            clock.tick(self._fps)
         pygame.quit()
 
     def update(self):
