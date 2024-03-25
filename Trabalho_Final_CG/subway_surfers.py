@@ -18,7 +18,6 @@ from random import randint, choice
 
 class Example(Base):
 
-
     #########################################
     # INIT
 
@@ -53,18 +52,15 @@ class Example(Base):
         self.scene.add(ground)
         # floor_temple
         floor_temple_geometry = RectangleGeometry(width=15, height=100)
-        floor_temple_material = TextureMaterial(
-            texture=Texture(file_name="images/floor_temple.jpg"))
+        floor_temple_material = TextureMaterial(texture=Texture(file_name="images/floor_temple.jpg"))
         floor_temple = Mesh(floor_temple_geometry, floor_temple_material)
         floor_temple.rotate_x(-math.pi/2)
-        # Adjust the y-position to place the floor_temple on top of the grass
-        floor_temple.set_position([0, -0.4, 0])
+        floor_temple.set_position([0, -0.4, 0]) # Adjust the y-position to place the floor_temple on top of the grass
         self.scene.add(floor_temple)
         # Kite
         self.kite_rig = MovementRig()
         kite_geometry = MolduraGeometryKite()
-        kite_material = TextureMaterial(texture=Texture(
-            file_name="images/fire1.jpg"))  # Placeholder for kite texture
+        kite_material = TextureMaterial(texture=Texture(file_name="images/fire1.jpg"))  # Placeholder for kite texture
         self.kite = Mesh(kite_geometry, kite_material)
         self.kite.set_position([0, 2, 20])  # Initial position of the kite
         self.scene.add(self.kite)
@@ -72,16 +68,16 @@ class Example(Base):
         self._obstacles = []
         self._score = 0
         self._game_over = False
-        # _Gravity parameters
         self._gravity = 0.1
-        self._terminal_velocity = 5  # Maximum falling speed
-        self._jumping = False        # Variable to track if the kite is currently _jumping
-        self._jump_speed = 1         # Speed at which the kite jumps
-        self._jump_height = 4        # Maximum height of the jump
-        self._jump_duration = 60     # Define the duration of the jump
+        self._terminal_velocity = 5
+        self._jumping = False
+        self._jump_speed = 1
+        self._jump_height = 4
+        self._jump_duration = 60
         self._esc_lock = False
         self._running = True
         self._fps = 60
+        self._clock = pygame.time.Clock()
 
     def run(self):
         self.initialize()  # Ensure that initialize is called
@@ -95,13 +91,15 @@ class Example(Base):
             self.handle_input(keys)
             self.update()
             self.renderer.render(self.scene, self.camera)
-            self.clock.tick(self._fps)
+            self._clock.tick(self._fps)
             pygame.display.flip()
         pygame.quit()
 
     def update(self):
-        if 
-            self.clock.tick(0)
+        if self._esc_lock: 
+            self._clock.tick(0)
+        else:
+            self._clock.tick(self._fps)
         if not self._game_over:
             self.move__obstacles()
             self.check_collision()
@@ -135,13 +133,13 @@ class Example(Base):
             self._jumping = True
             self.jump_start_y = self.kite.get_position()[1]
             self.jump_time = 0
-        if keys[K_DOWN]:  # Slide
+        if keys[K_DOWN]:  # Slide (TODO: Implement slide)
             self.slide()
-        if keys[K_ESCAPE] and not self._running:
-            True._running = True
-            
-        elif keys[K_ESCAPE] and self._running:
-            True._running = True
+        if keys[K_ESCAPE] and self._running:
+            self._running = False
+            self._esc_lock = True
+        elif keys[K_ESCAPE] and not self._running and not self._esc_lock:
+            self._running = True
 
     #########################################
     # HELPER FUNCTIONS
