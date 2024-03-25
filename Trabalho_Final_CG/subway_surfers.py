@@ -18,6 +18,10 @@ from random import randint, choice
 
 class Example(Base):
 
+
+    #########################################
+    # INIT
+
     def initialize(self):
         self.renderer = Renderer()
         self.scene = Scene()
@@ -76,17 +80,7 @@ class Example(Base):
         self._jump_height = 4        # Maximum height of the jump
         self._jump_duration = 60     # Define the duration of the jump
         self._is_stopped = False
-
-    def update(self):
-        if not self._game_over:
-            self.move__obstacles()
-            self.check_collision()
-            self._score += 1
-            self.apply__gravity()  # Apply _gravity to the kite
-            if self.lane_switching and pygame.time.get_ticks() - self.switch_timer >= self.switch_delay:
-                self.lane_switching = False
-        else:
-            print(f"Game Over! Your _score: {self._score}")
+        self._fps = 60
 
     def run(self):
         self.initialize()  # Ensure that initialize is called
@@ -96,16 +90,58 @@ class Example(Base):
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self._game_over = True
-        # Inside the main loop
             keys = pygame.key.get_pressed()
-            # Pass the 'keys' obtained from pygame.key.get_pressed() to handle_input
             self.handle_input(keys)
-
             self.update()
             self.renderer.render(self.scene, self.camera)
             pygame.display.flip()
-            clock.tick(60)
+            if not self._is_stopped:
+                clock.tick(self._fps)
         pygame.quit()
+
+    def update(self):
+        if not self._game_over:
+            self.move__obstacles()
+            self.check_collision()
+            self.apply__gravity()
+            self._score += 1
+            if self.lane_switching and pygame.time.get_ticks() - self.switch_timer >= self.switch_delay:
+                self.lane_switching = False
+        else:
+            print(f"Game Over! Your _score: {self._score}")
+
+    def handle_input(self, keys=None):  # Add 'keys=None' as an argument with default value
+        if keys is None:
+            keys = pygame.key.get_pressed()
+        # Camera movement
+        if keys[K_w]: self.rig.move_forward(0.1)
+        if keys[K_s]: self.rig.move_backward(0.1)
+        if keys[K_a]: self.rig.move_left(0.1)
+        if keys[K_d]: self.rig.move_right(0.1)
+        # Kite movement
+        if keys[K_LEFT]:  # Move left
+            if not self.lane_switching:
+                self.move_to_lane(-2)
+                self.lane_switching = True
+                self.switch_timer = pygame.time.get_ticks()
+        if keys[K_RIGHT]:  # Move right
+            if not self.lane_switching:
+                self.move_to_lane(2)
+                self.lane_switching = True
+                self.switch_timer = pygame.time.get_ticks()
+        if keys[K_UP] and not self._jumping:  # Jump
+            self._jumping = True
+            self.jump_start_y = self.kite.get_position()[1]
+            self.jump_time = 0
+        if keys[K_DOWN]:  # Slide
+            self.slide()
+        if keys[K_ESCAPE] and not self._is_stopped:
+            self._is_stopped = True
+        elif keys[K_ESCAPE] and self._is_stopped:
+            self._is_stopped = False
+
+    #########################################
+    # HELPER FUNCTIONS
 
     def apply__gravity(self):
         kite_pos = self.kite.get_position()
@@ -154,31 +190,6 @@ class Example(Base):
                 self._game_over = True
                 break  # Exit the loop if a collision is detected
 
-    def handle_input(self, keys=None):  # Add 'keys=None' as an argument with default value
-        if keys is None:
-            keys = pygame.key.get_pressed()
-        # Camera movement
-        if keys[K_w]: self.rig.move_forward(0.1)
-        if keys[K_s]: self.rig.move_backward(0.1)
-        if keys[K_a]: self.rig.move_left(0.1)
-        if keys[K_d]: self.rig.move_right(0.1)
-        # Kite movement
-        if keys[K_LEFT]:  # Move left
-            if not self.lane_switching:
-                self.move_to_lane(-2)
-                self.lane_switching = True
-                self.switch_timer = pygame.time.get_ticks()
-        if keys[K_RIGHT]:  # Move right
-            if not self.lane_switching:
-                self.move_to_lane(2)
-                self.lane_switching = True
-                self.switch_timer = pygame.time.get_ticks()
-        if keys[K_UP] and not self._jumping:  # Jump
-            self._jumping = True
-            self.jump_start_y = self.kite.get_position()[1]
-            self.jump_time = 0
-        if keys[K_DOWN]:  # Slide
-            self.slide()
 
     def move_to_lane(self, direction):
         current_pos = self.kite.get_position()
