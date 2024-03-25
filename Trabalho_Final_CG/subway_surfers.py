@@ -79,9 +79,9 @@ class Example(Base):
         self._jump_speed = 1         # Speed at which the kite jumps
         self._jump_height = 4        # Maximum height of the jump
         self._jump_duration = 60     # Define the duration of the jump
-        self._is_stopped = False
-        self._fps = 60
         self._esc_lock = False
+        self._running = True
+        self._fps = 60
 
     def run(self):
         self.initialize()  # Ensure that initialize is called
@@ -95,11 +95,13 @@ class Example(Base):
             self.handle_input(keys)
             self.update()
             self.renderer.render(self.scene, self.camera)
+            self.clock.tick(self._fps)
             pygame.display.flip()
-            clock.tick(self._fps)
         pygame.quit()
 
     def update(self):
+        if 
+            self.clock.tick(0)
         if not self._game_over:
             self.move__obstacles()
             self.check_collision()
@@ -135,10 +137,11 @@ class Example(Base):
             self.jump_time = 0
         if keys[K_DOWN]:  # Slide
             self.slide()
-        if keys[K_ESCAPE] and not self._is_stopped:
-            self._is_stopped = True
-        elif keys[K_ESCAPE] and self._is_stopped:
-            self._is_stopped = False
+        if keys[K_ESCAPE] and not self._running:
+            True._running = True
+            
+        elif keys[K_ESCAPE] and self._running:
+            True._running = True
 
     #########################################
     # HELPER FUNCTIONS
