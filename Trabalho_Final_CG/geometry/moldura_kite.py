@@ -1,4 +1,4 @@
-from geometry.obj_reader import my_obj_reader
+from geometry.obj_reader_kite import my_obj_reader
 from geometry.geometry import Geometry
 
 
@@ -6,7 +6,7 @@ class MolduraGeometryKite(Geometry):
     def __init__(self, width=1, height=1, depth=1):
         super().__init__()
         # Load data from OBJ file, which now includes UVs
-        position_data, uv_data = my_obj_reader('Blender/kitev2.obj')
+        position_data, uv_data = my_obj_reader('Blender/race-kite.obj')
 
         # Add position data as an attribute
         self.add_attribute("vec3", "vertexPosition", position_data)
