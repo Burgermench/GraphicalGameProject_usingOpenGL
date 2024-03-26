@@ -2,18 +2,21 @@ import math
 import pygame
 
 from pygame.locals import *
+from random import randint, choice
+
 from core.base import Base
 from core_ext.camera import Camera
 from core_ext.mesh import Mesh
 from core_ext.renderer import Renderer
 from core_ext.scene import Scene
 from core_ext.texture import Texture
+
 from geometry.moldura import MolduraGeometry
 from geometry.moldura_kite import MolduraGeometryKite
 from geometry.rectangle import RectangleGeometry
+
 from material.texture import TextureMaterial
 from extras.movement_rig import MovementRig
-from random import randint, choice
 
 # Implementation of "Beach Runner" game
 class Example(Base):
