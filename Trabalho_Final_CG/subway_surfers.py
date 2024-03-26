@@ -15,100 +15,104 @@ from material.texture import TextureMaterial
 from extras.movement_rig import MovementRig
 from random import randint, choice
 
-
+# Implementation of "Beach Runner" game
 class Example(Base):
 
     #########################################
     # INIT
 
+    # Initialize any prerequisites for the game logic
     def initialize(self):
         self.renderer = Renderer()
         self.scene = Scene()
-        self.camera = Camera(aspect_ratio=800/600)
+        self.camera = Camera(aspect_ratio=1280/800)
         self.rig = MovementRig()
         self.rig.add(self.camera)
         self.scene.add(self.rig)
         self.rig.set_position([0, 2, 25])
-        self.lane_switching = False
-        self.switch_timer = 0
-        self.switch_delay = 175  # Adjust the delay time as needed (in milliseconds)
         # Sky
         sky_geometry = RectangleGeometry(width=250, height=250)
-        sky_material = TextureMaterial(texture=Texture(
-            file_name="images/sky.jpg"), property_dict={"repeatUV": [5, 5]})
+        sky_material = TextureMaterial(texture=Texture(file_name="images/sky.jpg"), property_dict={"repeatUV": [5, 5]})
         sky = Mesh(sky_geometry, sky_material)
         self.scene.add(sky)
         # Ground and Lanes
-        lane_width = 1
-        lane_count = 3
-        lane_spacing = 50
-        ground_geometry = RectangleGeometry(
-            width=lane_width * lane_count + lane_spacing * (lane_count - 1), height=100)
-        ground_material = TextureMaterial(texture=Texture(
-            file_name="images/grass.jpg"), property_dict={"repeatUV": [50, 50]})
+        self.lane_width: int = 1
+        self.lane_count: int = 3
+        self.lane_spacing: int = 50
+        self.lane_switching: bool = False
+        self.switch_timer: int = 0
+        self.switch_delay: int = 100  # Adjust the delay time as needed (in milliseconds)
+        # Render the ground and lanes
+        ground_geometry = RectangleGeometry(width=self.lane_width*self.lane_count+self.lane_spacing*(self.lane_count-1), height=100)
+        ground_material = TextureMaterial(texture=Texture(file_name="images/grass.jpg"), property_dict={"repeatUV": [50, 50]})
         ground = Mesh(ground_geometry, ground_material)
         ground.rotate_x(-math.pi/2)
         ground.set_position([0, -0.5, 0])
         self.scene.add(ground)
-        # floor_temple
-        floor_temple_geometry = RectangleGeometry(width=15, height=100)
-        floor_temple_material = TextureMaterial(texture=Texture(file_name="images/floor_temple.jpg"))
-        floor_temple = Mesh(floor_temple_geometry, floor_temple_material)
-        floor_temple.rotate_x(-math.pi/2)
-        floor_temple.set_position([0, -0.4, 0]) # Adjust the y-position to place the floor_temple on top of the grass
-        self.scene.add(floor_temple)
-        # Kite
+        # Render the floor
+        floor_geometry = RectangleGeometry(width=15, height=100)
+        floor_material = TextureMaterial(texture=Texture(file_name="images/floor_temple.jpg"))
+        floor = Mesh(floor_geometry, floor_material)
+        floor.rotate_x(-math.pi/2)
+        floor.set_position([0, -0.4, 0]) # Adjust the y-position to place the floor on top of the grass
+        self.scene.add(floor)
+        # Render the kite
         self.kite_rig = MovementRig()
-        kite_geometry = MolduraGeometryKite()
-        kite_material = TextureMaterial(texture=Texture(file_name="images/fire1.jpg"))  # Placeholder for kite texture
-        self.kite = Mesh(kite_geometry, kite_material)
+        self.kite_geometry = MolduraGeometryKite()
+        self.kite_material = TextureMaterial(texture=Texture(file_name="images/fire1.jpg"))  # Placeholder for kite texture
+        self.kite = Mesh(self.kite_geometry, self.kite_material)
         self.kite.set_position([0, 2, 20])  # Initial position of the kite
         self.scene.add(self.kite)
         self.kite_rig.add(self.kite)
-        self._obstacles = []
-        self._score = 0
-        self._game_over = False
-        self._gravity = 0.1
-        self._terminal_velocity = 5
-        self._jumping = False
-        self._jump_speed = 1
-        self._jump_height = 4
-        self._jump_duration = 60
-        self._esc_lock = False
-        self._running = True
-        self._fps = 60
-        self._clock = pygame.time.Clock()
+        # Set some needed attributes for the game logic
+        self.clock: pygame.time.Clock = None
+        self.is_game_paused = False
+        self.is_game_over = False
+        self.fps = 60
+        self.score = 0
+        self.gravity = 0.1
+        self.terminal_velocity = 5
+        self.jumping = False
+        self.jump_speed = 1
+        self.jump_height = 4
+        self.jump_duration = 60
+        self.obstacles = []
+        self.keys_pressed = []
+        self.last_key: str = None
 
+    # Starts and loops the game until the game is over
     def run(self):
-        self.initialize()  # Ensure that initialize is called
+        self.initialize()
+        self.keys_pressed = pygame.key.get_pressed()
+        self.clock = pygame.time.Clock()
         pygame.init()
-        clock = pygame.time.Clock()
-        while not self._game_over:
+        while not self.is_game_over:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    self._game_over = True
-            keys = pygame.key.get_pressed()
-            self.handle_input(keys)
+                    self.is_game_over = True
+            self.keys_pressed = pygame.key.get_pressed()
+            self.handle_input(self.keys_pressed)
             self.update()
             self.renderer.render(self.scene, self.camera)
-            self._clock.tick(self._fps)
+            self.clock.tick(self.fps)
             pygame.display.flip()
         pygame.quit()
 
+    # Updates the game state
     def update(self):
-        if self._esc_lock: 
-            self._clock.tick(0)
+        if self.is_game_paused: 
+            self.clock.tick(0)
         else:
-            self._clock.tick(self._fps)
-        if not self._game_over:
-            self.move__obstacles()
+            self.clock.tick(self.fps)
+        if not self.is_game_over:
+            self.move_obstacles()
             self.check_collision()
-            self.apply__gravity()
-            self._score += 1
-            if self.lane_switching and pygame.time.get_ticks() - self.switch_timer >= self.switch_delay:
+            self.apply_gravity()
+            self.score += 1
+            if self.lane_switching and (pygame.time.get_ticks() - self.switch_timer) >= self.switch_delay:
                 self.lane_switching = False
         else:
-            print(f"Game Over! Your _score: {self._score}")
+            print(f"Game Over! Your _score: {self.score}")
 
     def handle_input(self, keys=None):  # Add 'keys=None' as an argument with default value
         if keys is None:
@@ -129,36 +133,35 @@ class Example(Base):
                 self.move_to_lane(2)
                 self.lane_switching = True
                 self.switch_timer = pygame.time.get_ticks()
-        if keys[K_UP] and not self._jumping:  # Jump
-            self._jumping = True
+        if keys[K_UP] and not self.jumping:  # Jump
+            self.jumping = True
             self.jump_start_y = self.kite.get_position()[1]
             self.jump_time = 0
         if keys[K_DOWN]:  # Slide (TODO: Implement slide)
             self.slide()
-        if keys[K_ESCAPE] and self._running:
-            self._running = False
-            self._esc_lock = True
-        elif keys[K_ESCAPE] and not self._running and not self._esc_lock:
-            self._running = True
+        if keys[K_ESCAPE] and self.is_game_paused:
+            self.is_game_paused = False
+        elif keys[K_ESCAPE] and not self.is_game_paused:
+            self.is_game_paused = True
 
     #########################################
     # HELPER FUNCTIONS
 
-    def apply__gravity(self):
+    def apply_gravity(self):
         kite_pos = self.kite.get_position()
-        if self._jumping:
+        if self.jumping:
             # During jump, update kite's y-position based on jump height
             self.jump_time += 1
             # Adjust jump speed based on duration
-            jump_progress = min(self.jump_time / self._jump_duration, 1)
-            new_y = self.jump_start_y + self._jump_height * \
+            jump_progress = min(self.jump_time / self.jump_duration, 1)
+            new_y = self.jump_start_y + self.jump_height * \
                 math.sin(jump_progress * math.pi)
             self.kite.set_position([kite_pos[0], new_y, kite_pos[2]])
             # End jump if maximum duration reached
-            if self.jump_time >= self._jump_duration:
-                self._jumping = False
+            if self.jump_time >= self.jump_duration:
+                self.jumping = False
         elif kite_pos[1] > 0:  # Apply _gravity only if kite is above the ground
-            new_y = max(0, kite_pos[1] - self._gravity)
+            new_y = max(0, kite_pos[1] - self.gravity)
             self.kite.set_position([kite_pos[0], new_y, kite_pos[2]])
 
     def add_obstacle(self):
@@ -172,12 +175,12 @@ class Example(Base):
         # Position far away in the z-axis
         obstacle.set_position([obstacle_x, 0, -20])
         self.scene.add(obstacle)
-        self._obstacles.append(obstacle)
+        self.obstacles.append(obstacle)
 
     def check_collision(self):
         kite_pos = self.kite.get_position()  # Retrieve kite position
         kite_radius = 1  # Adjust the kite radius as needed
-        for obstacle in self._obstacles:
+        for obstacle in self.obstacles:
             obstacle_pos = obstacle.get_position()  # Retrieve obstacle position
             obstacle_radius = 0.005  # Adjust the obstacle radius as needed
             # Calculate the distance between the kite and the obstacle along each axis
@@ -188,7 +191,7 @@ class Example(Base):
             if abs(dx) < kite_radius + obstacle_radius and abs(dy) < kite_radius + obstacle_radius and abs(dz) < kite_radius + obstacle_radius:
                 print(
                     f"Collision detected! Kite position: {kite_pos}, Obstacle position: {obstacle_pos}")
-                self._game_over = True
+                self.is_game_over = True
                 break  # Exit the loop if a collision is detected
 
 
@@ -208,24 +211,26 @@ class Example(Base):
     def slide(self):
         current_pos = self.kite.get_position()
         # Ensure kite doesn't go beneath the ground
-        new_y = max(0, current_pos[1] - self._gravity)
+        new_y = max(0, current_pos[1] - self.gravity)
         self.kite.set_position([current_pos[0], new_y, current_pos[2]])
 
-    def move__obstacles(self):
-        new__obstacles = []
-        for obstacle in self._obstacles:
+    # Add obstacle at random time
+    def spawn_obstacle(self):
+        if len(self.obstacles) < 5 and randint(0, 20) == 0:
+            self.add_obstacle()
+    def move_obstacles(self):
+        new_obstacles = []
+        for obstacle in self.obstacles:
             # Move obstacle towards the player using Object3D method
             obstacle.translate(0, 0, 0.2)
             # Keep _obstacles within a certain range
             if obstacle.global_position[2] < 30:
-                new__obstacles.append(obstacle)
+                new_obstacles.append(obstacle)
             else:
                 self.scene.remove(obstacle)  # Remove obstacle from the scene if it's too far
-        self._obstacles = new__obstacles
-        # Randomly add a new obstacle
-        if len(self._obstacles) < 5 and randint(0, 20) == 0:
-            self.add_obstacle()
+        self.obstacles = new_obstacles
+        self.spawn_obstacle()
 
 
 # Instantiate this class and run the program
-Example(screen_size=[1920, 1080]).run()
+Example(screen_size=[1280, 800]).run()
