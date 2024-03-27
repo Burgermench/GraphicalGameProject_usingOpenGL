@@ -26,6 +26,12 @@ class Example(Base):
 
     # Initialize any prerequisites for the game logic
     def initialize(self):
+        # Meta-info
+        self.debug = True
+        self.fps = 60
+        self.frame = 0      # TODO: implement as tuple for logging info to files and/or terminal (with timestamps)
+        self.score = 0      # TODO: implement on bottom-right of screen
+        # Rendering, camera and objects
         self.renderer = Renderer()
         self.scene = Scene()
         self.camera = Camera(aspect_ratio=1280/800)
@@ -72,13 +78,10 @@ class Example(Base):
         self.is_game_paused = False # TODO:
         self.is_game_over = False
         # Granular control
-        self.debug = False # TODO: implement
-        self.fps = 60 # TODO: implement for debugging
-        self.frame = 0 # TODO: implement as tuple for logging info
-        self.score = 0
         self.gravity = 0.2
         self.terminal_velocity = 5
         self.jumping = False
+        self.sliding = False
         self.jump_speed = 1
         self.jump_height = 4
         self.jump_duration = 60
@@ -86,8 +89,8 @@ class Example(Base):
         # Input
         self.keys_down = []
         self.keys_up = []
-        self.keys_just_released = []
-        self.keys_just_pushed = []
+        self.keys_released = []
+        self.keys_pressed = []
 
     # Starts and loops the game until the game is over
     def run(self):
@@ -100,7 +103,7 @@ class Example(Base):
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     self.is_game_over = True
-            self.handle_input(pg.key.get_pressed())
+            self.handle_input()
             self.update()
             self.renderer.render(self.scene, self.camera)
             self.clock.tick(self.fps)
@@ -110,7 +113,7 @@ class Example(Base):
     # Updates the game state
     def update(self):
         self.frame += 1
-        self.check_keys(self)
+        self.check_keys()
         if self.is_game_paused:
             self.clock.tick(0)
         else:
@@ -126,68 +129,87 @@ class Example(Base):
             print(f"Game Over! Your _score: {self.score}")
 
     def handle_input(self):
-        for key in self.keys_down:
-            # Camera movement
-            if key == pg.keys.K_w: self.rig.move_forward(0.1)
-            if key == pg.keys.K_s: self.rig.move_backward(0.1)
-            if key == pg.keys.K_a: self.rig.move_left(0.1)
-            if key == pg.keys.K_d: self.rig.move_right(0.1)
-            # Kite movement
-            if key == pg.keys.K_LEFT:  # Move left
-                if not self.lane_switching:
+        # Kite movement
+        if pg.K_LEFT in self.keys_pressed:  # Move left
+            print("pressed key: Left arrow")
+            if not self.lane_switching:
                     self.move_to_lane(-2)
                     self.lane_switching = True
                     self.switch_timer = pg.time.get_ticks()
-            if key == pg.keys.K_RIGHT:  # Move right
-                if not self.lane_switching:
-                    self.move_to_lane(2)
-                    self.lane_switching = True
-                    self.switch_timer = pg.time.get_ticks()
-            if key == pg.keys.K_UP and not self.jumping:  # Jump
-                self.jumping = True
-                self.jump_start_y = self.kite.get_position()[1]
-                self.jump_time = 0
-            if key == pg.keys.K_DOWN:  # Slide (TODO: Implement slide)
-                self.slide()
-            if key == pg.keys.K_ESCAPE and self.is_game_paused:
-                self.is_game_paused = False
-            elif key == pg.keys.K_ESCAPE and not self.is_game_paused:
-                self.is_game_paused = True
+        if pg.K_RIGHT in self.keys_pressed:  # Move right
+            print("pressed key: Arrow Up")
+            if not self.lane_switching:
+                self.move_to_lane(2)
+                self.lane_switching = True
+                self.switch_timer = pg.time.get_ticks()
+        if pg.K_UP and not self.jumping and not self.sliding:
+            if self.debug: print("pressed key: Arrow Up")
+            self.jumping = True
+            self.jump_start_y = self.kite.get_position()[1]
+            self.jump_time = 0
+        if pg.K_DOWN and not self.jumping and not self.sliding:  # Slide (TODO: Implement slide)
+            self.slide()
+        # Camera movement
+        if pg.K_w in self.keys_pressed:
+            self.rig.move_forward(0.1)
+        if pg.K_s in self.keys_pressed:
+            self.rig.move_backward(0.1)
+        if pg.K_a in self.keys_pressed: 
+            self.rig.move_left(0.1)
+        if pg.K_d in self.keys_pressed:
+            self.rig.move_right(0.1)
+        if pg.K_ESCAPE in self.keys_pressed and not self.is_game_paused:
+            self.is_game_paused = True
+        elif pg.K_ESCAPE and self.is_game_paused:
+            self.is_game_paused = False
 
     #########################################
     # HELPER FUNCTIONS
 
-    # collect data on the keys that are pressed, unpressed, released, and pushed
-    # for more precise, and granular control over input
-    # (pushed as in key state went from released -> pressed == [push moment])
+    # collect data on the keys that are down, up, released, and pressed
+    # for more precise, and granular control over input.
+    # (pressed as in key state went from up -> down == [push moment])
+    # (released as in key state going from down -> up == [let go moment])
+    '''
+    Transitions:
+                ___                     ___
+     ___       |   |        ___        |   |
+    |   |      |   |       |   |       |   |
+    <down>      <up>       <down>       <up>
+       <released>   <pressed>   <released>
+    '''
     def check_keys(self):
-        for key_value, is_pressed in enumerate(self.keys_down):
-            if is_pressed:
-                self.keys_down.append(key_value)                # keys_down
-        for key_value, is_pressed in enumerate(self.keys_unpressed):
-            if is_pressed and key_value in self.keys_unpressed:
-                self.keys_just_pushed.append(key_value)         # keys_just_pushed
-                # if it's just been pushed, it's definitely not being released
-                if key_value in self.keys_just_released:
-                    self.keys_just_released.remove(key_value)   # keys_just released
-                # but we do not know if it's being held or not yet
-        for key_value, is_pressed in enumerate(self.keys_unpressed):
-            
+        self.keys_down = pg.key.get_pressed()
+        for key, down in enumerate(self.keys_down):
+            print("pressed key: ", key)
+            up = not down
+            if down and key in self.keys_up: 
+                if key not in self.keys_released:
+                    self.keys_released.append(key)
+                if key in self.keys_pressed:
+                    self.keys_pressed.remove(key)
+            if down and key in self.keys_down:
+                if key not in self.keys_pressed:
+                    self.keys_pressed.append(key)
+                if key in self.keys_released:
+                    self.keys_released.remove(key)
+            if up and key not in self.keys_down:
+                if key not in self.keys_up:
+                    self.keys_up.append(key)
+                if key in self.keys_down:
+                    self.keys_down.remove(key)
 
+    # Emulate force of gravity over pawn
     def apply_gravity(self):
         kite_pos = self.kite.get_position()
         if self.jumping:
-            # During jump, update kite's y-position based on jump height
             self.jump_time += 1
-            # Adjust jump speed based on duration
             jump_progress = min(self.jump_time / self.jump_duration, 1)
-            new_y = self.jump_start_y + self.jump_height * \
-                math.sin(jump_progress * math.pi)
+            new_y = self.jump_start_y + self.jump_height * math.sin(jump_progress * math.pi)
             self.kite.set_position([kite_pos[0], new_y, kite_pos[2]])
-            # End jump if maximum duration reached
             if self.jump_time >= self.jump_duration:
                 self.jumping = False
-        elif kite_pos[1] > 0:  # Apply _gravity only if kite is above the ground
+        elif kite_pos[1] > 0:
             new_y = max(0, kite_pos[1] - self.gravity)
             self.kite.set_position([kite_pos[0], new_y, kite_pos[2]])
 
@@ -216,11 +238,9 @@ class Example(Base):
             dz = kite_pos[2] - obstacle_pos[2]
             # Check for collision along each axis
             if abs(dx) < kite_radius + obstacle_radius and abs(dy) < kite_radius + obstacle_radius and abs(dz) < kite_radius + obstacle_radius:
-                print(
-                    f"Collision detected! Kite position: {kite_pos}, Obstacle position: {obstacle_pos}")
+                print(f"Collision detected! Kite position: {kite_pos}, Obstacle position: {obstacle_pos}")
                 self.is_game_over = True
                 break  # Exit the loop if a collision is detected
-
 
     def move_to_lane(self, direction):
         current_pos = self.kite.get_position()
@@ -258,7 +278,6 @@ class Example(Base):
                 self.scene.remove(obstacle)  # Remove obstacle from the scene if it's too far
         self.obstacles = new_obstacles
         self.spawn_obstacle()
-
 
 # Instantiate this class and run the program
 Example(screen_size=[1280, 800]).run()
