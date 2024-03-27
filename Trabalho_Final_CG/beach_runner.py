@@ -1,5 +1,5 @@
 import math
-import pygame
+import pygame as pg
 
 from pygame.locals import *
 from random import randint, choice
@@ -68,42 +68,50 @@ class Example(Base):
         self.scene.add(self.kite)
         self.kite_rig.add(self.kite)
         # Set some needed attributes for the game logic
-        self.clock: pygame.time.Clock = None
-        self.is_game_paused = False
+        self.clock: pg.time.Clock = None
+        self.is_game_paused = False # TODO:
         self.is_game_over = False
-        self.fps = 60
+        # Granular control
+        self.debug = False # TODO: implement
+        self.fps = 60 # TODO: implement for debugging
+        self.frame = 0 # TODO: implement as tuple for logging info
         self.score = 0
-        self.gravity = 0.1
+        self.gravity = 0.2
         self.terminal_velocity = 5
         self.jumping = False
         self.jump_speed = 1
         self.jump_height = 4
         self.jump_duration = 60
         self.obstacles = []
-        self.keys_pressed = []
-        self.last_key: str = None
+        # Input
+        self.keys_down = []
+        self.keys_up = []
+        self.keys_just_released = []
+        self.keys_just_pushed = []
 
     # Starts and loops the game until the game is over
     def run(self):
         self.initialize()
-        self.keys_pressed = pygame.key.get_pressed()
-        self.clock = pygame.time.Clock()
-        pygame.init()
+        self.clock = pg.time.Clock()
+        pg.init()
+        pg.display.set_caption("Beach Runner")
+        self.keys_down = pg.key.get_pressed()
         while not self.is_game_over:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
+            for event in pg.event.get():
+                if event.type == pg.QUIT:
                     self.is_game_over = True
-            self.keys_pressed = pygame.key.get_pressed()
-            self.handle_input(self.keys_pressed)
+            self.handle_input(pg.key.get_pressed())
             self.update()
             self.renderer.render(self.scene, self.camera)
             self.clock.tick(self.fps)
-            pygame.display.flip()
-        pygame.quit()
+            pg.display.flip()
+        pg.quit()
 
     # Updates the game state
     def update(self):
-        if self.is_game_paused: 
+        self.frame += 1
+        self.check_keys(self)
+        if self.is_game_paused:
             self.clock.tick(0)
         else:
             self.clock.tick(self.fps)
@@ -112,43 +120,59 @@ class Example(Base):
             self.check_collision()
             self.apply_gravity()
             self.score += 1
-            if self.lane_switching and (pygame.time.get_ticks() - self.switch_timer) >= self.switch_delay:
+            if self.lane_switching and (pg.time.get_ticks() - self.switch_timer) >= self.switch_delay:
                 self.lane_switching = False
         else:
             print(f"Game Over! Your _score: {self.score}")
 
-    def handle_input(self, keys=None):  # Add 'keys=None' as an argument with default value
-        if keys is None:
-            keys = pygame.key.get_pressed()
-        # Camera movement
-        if keys[K_w]: self.rig.move_forward(0.1)
-        if keys[K_s]: self.rig.move_backward(0.1)
-        if keys[K_a]: self.rig.move_left(0.1)
-        if keys[K_d]: self.rig.move_right(0.1)
-        # Kite movement
-        if keys[K_LEFT]:  # Move left
-            if not self.lane_switching:
-                self.move_to_lane(-2)
-                self.lane_switching = True
-                self.switch_timer = pygame.time.get_ticks()
-        if keys[K_RIGHT]:  # Move right
-            if not self.lane_switching:
-                self.move_to_lane(2)
-                self.lane_switching = True
-                self.switch_timer = pygame.time.get_ticks()
-        if keys[K_UP] and not self.jumping:  # Jump
-            self.jumping = True
-            self.jump_start_y = self.kite.get_position()[1]
-            self.jump_time = 0
-        if keys[K_DOWN]:  # Slide (TODO: Implement slide)
-            self.slide()
-        if keys[K_ESCAPE] and self.is_game_paused:
-            self.is_game_paused = False
-        elif keys[K_ESCAPE] and not self.is_game_paused:
-            self.is_game_paused = True
+    def handle_input(self):
+        for key in self.keys_down:
+            # Camera movement
+            if key == pg.keys.K_w: self.rig.move_forward(0.1)
+            if key == pg.keys.K_s: self.rig.move_backward(0.1)
+            if key == pg.keys.K_a: self.rig.move_left(0.1)
+            if key == pg.keys.K_d: self.rig.move_right(0.1)
+            # Kite movement
+            if key == pg.keys.K_LEFT:  # Move left
+                if not self.lane_switching:
+                    self.move_to_lane(-2)
+                    self.lane_switching = True
+                    self.switch_timer = pg.time.get_ticks()
+            if key == pg.keys.K_RIGHT:  # Move right
+                if not self.lane_switching:
+                    self.move_to_lane(2)
+                    self.lane_switching = True
+                    self.switch_timer = pg.time.get_ticks()
+            if key == pg.keys.K_UP and not self.jumping:  # Jump
+                self.jumping = True
+                self.jump_start_y = self.kite.get_position()[1]
+                self.jump_time = 0
+            if key == pg.keys.K_DOWN:  # Slide (TODO: Implement slide)
+                self.slide()
+            if key == pg.keys.K_ESCAPE and self.is_game_paused:
+                self.is_game_paused = False
+            elif key == pg.keys.K_ESCAPE and not self.is_game_paused:
+                self.is_game_paused = True
 
     #########################################
     # HELPER FUNCTIONS
+
+    # collect data on the keys that are pressed, unpressed, released, and pushed
+    # for more precise, and granular control over input
+    # (pushed as in key state went from released -> pressed == [push moment])
+    def check_keys(self):
+        for key_value, is_pressed in enumerate(self.keys_down):
+            if is_pressed:
+                self.keys_down.append(key_value)                # keys_down
+        for key_value, is_pressed in enumerate(self.keys_unpressed):
+            if is_pressed and key_value in self.keys_unpressed:
+                self.keys_just_pushed.append(key_value)         # keys_just_pushed
+                # if it's just been pushed, it's definitely not being released
+                if key_value in self.keys_just_released:
+                    self.keys_just_released.remove(key_value)   # keys_just released
+                # but we do not know if it's being held or not yet
+        for key_value, is_pressed in enumerate(self.keys_unpressed):
+            
 
     def apply_gravity(self):
         kite_pos = self.kite.get_position()
@@ -221,6 +245,7 @@ class Example(Base):
     def spawn_obstacle(self):
         if len(self.obstacles) < 5 and randint(0, 20) == 0:
             self.add_obstacle()
+
     def move_obstacles(self):
         new_obstacles = []
         for obstacle in self.obstacles:
