@@ -163,6 +163,7 @@ class Example(Base):
         if pg.K_d in self.keys_pressed:
             if self.debug: print("key pressed: d")
             self.rig.move_right(0.1)
+        # Activate menu
         if pg.K_ESCAPE in self.keys_pressed and not self.is_game_paused:
             if self.debug: print("key pressed: esc, running -> paused")
             self.is_game_paused = True
