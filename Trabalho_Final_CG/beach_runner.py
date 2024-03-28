@@ -73,9 +73,9 @@ class Example(Base):
         self.kite.set_position([0, 2, 20])  # Initial position of the kite
         self.scene.add(self.kite)
         self.kite_rig.add(self.kite)
-        # Set some needed attributes for the game logic
         self.clock: pg.time.Clock = None
-        self.is_game_paused = False # TODO:
+        # Game logic flags
+        self.is_game_paused = False     # TODO:
         self.is_game_over = False
         # Granular control
         self.gravity = 0.2
@@ -87,6 +87,7 @@ class Example(Base):
         self.jump_duration = 60
         self.obstacles = []
         # Input
+        self.pg_keys = pg.key.get_pressed()
         self.keys_down = []
         self.keys_up = []
         self.keys_released = []
@@ -98,7 +99,6 @@ class Example(Base):
         self.clock = pg.time.Clock()
         pg.init()
         pg.display.set_caption("Beach Runner")
-        self.keys_down = pg.key.get_pressed()
         while not self.is_game_over:
             for event in pg.event.get():
                 if event.type == pg.QUIT:
@@ -173,10 +173,12 @@ class Example(Base):
     #########################################
     # HELPER FUNCTIONS
 
-    # collect data on the keys that are down, up, released, and pressed
-    # for more precise, and granular control over input.
-    # (pressed as in key state went from up -> down == [push moment])
-    # (released as in key state going from down -> up == [let go moment])
+    # Collect data on the keys that are down, up, released, and pressed
+    # for more precise, and granular control over input. Instead of only
+    # 'up' and 'down' states, we now also get to manipulate key state
+    # transitions such as:
+    #  (pressed as in key state went from up -> down == [push key attitude])
+    #  (released as in key state going from down -> up == [let go attitude])
     '''
     Transitions:
                 ___                     ___
@@ -185,25 +187,31 @@ class Example(Base):
     <down>      <up>       <down>       <up>
        <released>   <pressed>   <released>
     '''
-    def check_keys(self):
-        self.keys_down = pg.key.get_pressed()
-        for key, down in enumerate(self.keys_down):
-            up = not down
-            if down and key in self.keys_up: 
-                if key not in self.keys_released:
-                    self.keys_released.append(key)
-                if key in self.keys_pressed:
-                    self.keys_pressed.remove(key)
-            if down and key in self.keys_down:
-                if key not in self.keys_pressed:
-                    self.keys_pressed.append(key)
-                if key in self.keys_released:
-                    self.keys_released.remove(key)
-            if up and key not in self.keys_down:
-                if key not in self.keys_up:
-                    self.keys_up.append(key)
-                if key in self.keys_down:
-                    self.keys_down.remove(key)
+    def check_keys(self): # TODO: finish
+        for key, active in enumerate(self.pg_keys):
+            # boolean key states logic simplification
+            key_up_in_previous_frame = key in self.keys_up
+            key_up_in_current_frame = not active
+            key_down_in_previous_frame = key in self.keys_down
+            key_down_in_current_frame = active
+            key_pressed_in_current_frame = key_up_in_previous_frame and key_down_in_current_frame
+            key_released_in_current_frame = key_down_in_previous_frame and key_up_in_current_frame
+            # logic application
+            if key_released_in_current_frame:
+                self.keys_released.append(key)
+                if key in self.keys_pressed: self.keys_pressed.remove(key)
+            elif key_pressed_in_current_frame:
+                self.keys_pressed.append(key)
+                if key in self.keys_released: self.keys_released.remove(key)
+            if key_up_in_current_frame and key not in self.keys_up:
+                self.keys_up.append(key)
+                if key in self.keys_down: self.keys_down.remove(key)
+            elif key_down_in_current_frame and key not in self.keys_down:
+                self.keys_down.append(key)
+                if key in self.keys_up: self.keys_up.remove(key)
+            #debug
+            if self.debug and key_pressed_in_current_frame: print(f"key pressed: {key}")
+            
 
     # Emulate force of gravity over pawn
     def apply_gravity(self):
