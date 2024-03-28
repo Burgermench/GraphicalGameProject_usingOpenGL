@@ -176,15 +176,33 @@ class Example(Base):
         if self.jumping:
             self.jump_time += 1
             jump_progress = min(self.jump_time / self.jump_duration, 1)
-            new_y = self.jump_start_y + self.jump_height * \
-                math.sin(jump_progress * math.pi)
+            new_y = self.jump_start_y + self.jump_height * math.sin(jump_progress * math.pi)
             self.kite.set_position([kite_pos[0], new_y, kite_pos[2]])
             if self.jump_time >= self.jump_duration:
                 self.jumping = False
         elif kite_pos[1] > 0:
             new_y = max(0, kite_pos[1] - self.gravity)
             self.kite.set_position([kite_pos[0], new_y, kite_pos[2]])
-
+    
+    def move_obstacles(self):
+        new_obstacles = []
+        for obstacle in self.obstacles:
+            # Move obstacle towards the player using Object3D method
+            obstacle.translate(0, 0, 0.2)
+            # Keep _obstacles within a certain range
+            if obstacle.global_position[2] < 30 or obstacle.global_position[2] > -30:
+                new_obstacles.append(obstacle)
+            else:
+                # Remove obstacle from the scene if it's too far
+                self.scene.remove(obstacle)
+        self.obstacles = new_obstacles
+        self.spawn_obstacle()
+    
+    # Add obstacle at random time
+    def spawn_obstacle(self):
+        if len(self.obstacles) < 5 and randint(0, 20) == 0:
+            self.add_obstacle()
+            
     def add_obstacle(self):
         obstacle_geometry = MolduraGeometry()
         obstacle_material = TextureMaterial(texture=Texture(
@@ -200,7 +218,7 @@ class Example(Base):
 
     def check_collision(self):
         kite_pos = self.kite.get_position()  # Retrieve kite position
-        kite_radius = 1  # Adjust the kite radius as needed
+        kite_radius = 0.75 # Adjust the kite radius as needed
         for obstacle in self.obstacles:
             obstacle_pos = obstacle.get_position()  # Retrieve obstacle position
             obstacle_radius = 0.005  # Adjust the obstacle radius as needed
@@ -234,24 +252,6 @@ class Example(Base):
         new_y = max(0, current_pos[1] - self.gravity)
         self.kite.set_position([current_pos[0], new_y, current_pos[2]])
 
-    # Add obstacle at random time
-    def spawn_obstacle(self):
-        if len(self.obstacles) < 5 and randint(0, 20) == 0:
-            self.add_obstacle()
-
-    def move_obstacles(self):
-        new_obstacles = []
-        for obstacle in self.obstacles:
-            # Move obstacle towards the player using Object3D method
-            obstacle.translate(0, 0, 0.2)
-            # Keep _obstacles within a certain range
-            if obstacle.global_position[2] < 30:
-                new_obstacles.append(obstacle)
-            else:
-                # Remove obstacle from the scene if it's too far
-                self.scene.remove(obstacle)
-        self.obstacles = new_obstacles
-        self.spawn_obstacle()
 
 
 # Instantiate this class and run the program
