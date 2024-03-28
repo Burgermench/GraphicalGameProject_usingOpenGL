@@ -137,17 +137,19 @@ class Example(Base):
                 self.lane_switching = True
                 self.switch_timer = pg.time.get_ticks()
         if pg.K_RIGHT in self.keys_pressed:  # Move right
-            if self.debug: print("key pressed: Arrow Up")
+            if self.debug: print("key pressed: Arrow Right")
             if not self.lane_switching:
                 self.move_to_lane(2)
                 self.lane_switching = True
                 self.switch_timer = pg.time.get_ticks()
-        if pg.K_UP and not self.jumping and not self.sliding:
+        
+        not_already_sliding_or_jumping = not self.jumping and not self.sliding # would be redundant
+        if pg.K_UP and not_already_sliding_or_jumping:
             if self.debug: print("key pressed: Arrow Up")
             self.jumping = True
             self.jump_start_y = self.kite.get_position()[1]
             self.jump_time = 0
-        if pg.K_DOWN and not self.jumping and not self.sliding:  # Slide (TODO: Implement slide)
+        if pg.K_DOWN and not_already_sliding_or_jumping:  # Slide (TODO: Implement slide)
             if self.debug: print("key pressed: Arrow Down")
             self.slide()
         # Camera movement
@@ -191,11 +193,11 @@ class Example(Base):
     def check_keys(self): # TODO: finish
         for key, active in enumerate(self.pg_keys):
             # boolean key states logic simplification
-            key_up_in_previous_frame = key in self.keys_up
-            key_up_in_current_frame = not active
-            key_down_in_previous_frame = key in self.keys_down
-            key_down_in_current_frame = active
-            key_pressed_in_current_frame = key_up_in_previous_frame and key_down_in_current_frame
+            key_up_in_previous_frame      = key in self.keys_up
+            key_up_in_current_frame       = not active
+            key_down_in_previous_frame    = key in self.keys_down
+            key_down_in_current_frame     = active
+            key_pressed_in_current_frame  = key_up_in_previous_frame and key_down_in_current_frame
             key_released_in_current_frame = key_down_in_previous_frame and key_up_in_current_frame
             # logic application
             if key_released_in_current_frame:
