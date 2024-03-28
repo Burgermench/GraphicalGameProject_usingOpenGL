@@ -27,7 +27,7 @@ class Example(Base):
     # Initialize any prerequisites for the game logic
     def initialize(self):
         # Meta-info
-        self.debug = True
+        self.debug = True   # turn ON or OFF
         self.fps = 60
         self.frame = 0      # TODO: implement as tuple for logging info to files and/or terminal (with timestamps)
         self.score = 0      # TODO: implement on bottom-right of screen
@@ -131,36 +131,43 @@ class Example(Base):
     def handle_input(self):
         # Kite movement
         if pg.K_LEFT in self.keys_pressed:  # Move left
-            print("pressed key: Left arrow")
+            if self.debug: print("key pressed: Left arrow")
             if not self.lane_switching:
-                    self.move_to_lane(-2)
-                    self.lane_switching = True
-                    self.switch_timer = pg.time.get_ticks()
+                self.move_to_lane(-2)
+                self.lane_switching = True
+                self.switch_timer = pg.time.get_ticks()
         if pg.K_RIGHT in self.keys_pressed:  # Move right
-            print("pressed key: Arrow Up")
+            if self.debug: print("key pressed: Arrow Up")
             if not self.lane_switching:
                 self.move_to_lane(2)
                 self.lane_switching = True
                 self.switch_timer = pg.time.get_ticks()
         if pg.K_UP and not self.jumping and not self.sliding:
-            if self.debug: print("pressed key: Arrow Up")
+            if self.debug: print("key pressed: Arrow Up")
             self.jumping = True
             self.jump_start_y = self.kite.get_position()[1]
             self.jump_time = 0
         if pg.K_DOWN and not self.jumping and not self.sliding:  # Slide (TODO: Implement slide)
+            if self.debug: print("key pressed: Arrow Down")
             self.slide()
         # Camera movement
         if pg.K_w in self.keys_pressed:
+            if self.debug: print("key pressed: w")
             self.rig.move_forward(0.1)
         if pg.K_s in self.keys_pressed:
+            if self.debug: print("key pressed: s")
             self.rig.move_backward(0.1)
-        if pg.K_a in self.keys_pressed: 
+        if pg.K_a in self.keys_pressed:
+            if self.debug: print("key pressed: a")
             self.rig.move_left(0.1)
         if pg.K_d in self.keys_pressed:
+            if self.debug: print("key pressed: d")
             self.rig.move_right(0.1)
         if pg.K_ESCAPE in self.keys_pressed and not self.is_game_paused:
+            if self.debug: print("key pressed: esc, running -> paused")
             self.is_game_paused = True
         elif pg.K_ESCAPE and self.is_game_paused:
+            if self.debug: print("key pressed: esc, paused -> running")
             self.is_game_paused = False
 
     #########################################
@@ -181,7 +188,6 @@ class Example(Base):
     def check_keys(self):
         self.keys_down = pg.key.get_pressed()
         for key, down in enumerate(self.keys_down):
-            print("pressed key: ", key)
             up = not down
             if down and key in self.keys_up: 
                 if key not in self.keys_released:
@@ -215,8 +221,7 @@ class Example(Base):
 
     def add_obstacle(self):
         obstacle_geometry = MolduraGeometry()
-        obstacle_material = TextureMaterial(texture=Texture(
-            file_name="images/1.jpg"))  # Placeholder for obstacle texture
+        obstacle_material = TextureMaterial(texture=Texture(file_name="images/1.jpg"))  # Placeholder for obstacle texture
         # Randomly select a lane for the obstacle
         obstacle_lane = choice([-1.5, 0, 1.5])
         obstacle_x = obstacle_lane * 2  # Adjust obstacle position based on the lane
