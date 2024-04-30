@@ -5,6 +5,7 @@ import pygame
 from pygame.locals import *
 from random import randint, choice
 
+from extras.text_texture import TextTexture
 from core.base import Base
 from core_ext.camera import Camera
 from core_ext.mesh import Mesh
@@ -38,7 +39,16 @@ def get_font(size): # Returns Press-Start-2P in the desired size
 def get_title_font(size): # Returns Press-Start-2P in the desired size
     return pygame.font.Font("assets/Jersey20-Regular.ttf", size)
 
-
+def create_text(font, size, transparent, width=200, height=80, color=[0, 0, 200], position=[0, 600], text: str = 'Sem texto'):
+    geometry = RectangleGeometry(
+        width=width, height=height, position=position, alignment=[0, 1])
+    message = TextTexture(text=text,
+                          system_font_name=font,
+                          font_size=size, font_color=color,
+                          transparent=transparent)
+    material = TextureMaterial(message)
+    mesh = Mesh(geometry, material)
+    return mesh
 
 class Example(Base):
 
@@ -47,12 +57,18 @@ class Example(Base):
 
     # Initialize any prerequisites for the game logic
     def initialize(self):
+    
         # Meta-info
         self.debug = True   # turn ON or OFF
         self.fps = 60
         # TODO: implement as tuple for logging info to files and/or terminal (with timestamps)
         self.frame = 0
         self.score = 0      # TODO: implement on bottom-right of screen
+        #HUD Scene
+        self.hud_scene = Scene()
+        self.hud_camera = Camera()
+        self.hud_camera.set_orthographic(0, 800, 0, 600, 1, -1)
+        
         # Rendering, camera and objects
         self.renderer = Renderer()
         self.scene = Scene()
@@ -118,6 +134,20 @@ class Example(Base):
         self.obstacles = []
         self.keys_pressed = []
         self.last_key: str = None
+        
+        #Pontos/Moedas -> Diferente de score
+        self.points = 0
+        self.old_points = self.points
+        
+        self.points_label = create_text(
+            "Jersey20", 50, True, text="Pontos: " + str(self.points))
+        self.hud_scene.add(self.points_label)
+        #self.desc_label = create_text("Arial", 20, True, width=400, height=100, position=[
+        #                              200, 400], text="Objetivo: Encontra o máximo de colheres até o tempo acabar.")
+        #self.hud_scene.add(self.desc_label)
+        #self.start_label = create_text("Arial", 20, True, width=400, height=100, position=[
+        #    200, 300], text="Pressiona 'l' para começares.")
+        #self.hud_scene.add(self.start_label)
 
     # Starts and loops the game until the game is over
     def run(self):
@@ -133,6 +163,8 @@ class Example(Base):
             self.handle_input(self.keys_pressed)
             self.update()
             self.renderer.render(self.scene, self.camera)
+            self.renderer.render(
+            self.hud_scene, self.hud_camera, clear_color=False)
             self.clock.tick(self.fps)
             pygame.display.flip()
         pygame.quit()
@@ -147,12 +179,25 @@ class Example(Base):
             self.move_obstacles()
             self.check_collision()
             self.apply_gravity()
+            #Pontos/Moedas e Score
+            self.check_points_hud()
+            self.points += 1 #idealmente self.points += check_coins()
             self.score += 1
+            
             if self.lane_switching and (pygame.time.get_ticks() - self.switch_timer) >= self.switch_delay:
                 self.lane_switching = False
         else:
             print(f"Game Over! Your _score: {self.score}")
 
+    # Verifica se o player apanhou moedas e atualiza hud
+    def check_points_hud (self):
+        if self.points != self.old_points:
+                self.hud_scene.remove(self.points_label)
+                self.points_label = create_text(
+                    "Jersey20", 40, True, text="Pontos: " + str(self.points))
+                self.hud_scene.add(self.points_label)
+                self.old_points = self.points
+        
     def handle_input(self, keys=None):  # Add 'keys=None' as an argument with default value
         if keys is None:
             keys = pygame.key.get_pressed()
@@ -335,7 +380,7 @@ def main_menu():
         pygame.display.update()
 
 #SEM MENU
-#Example(screen_size=[1280, 800]).run()
+Example(screen_size=[1280, 800]).run()
 
 #COM MENU
-main_menu()
+#main_menu()
