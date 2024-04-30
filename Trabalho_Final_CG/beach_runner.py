@@ -1,4 +1,5 @@
 import math
+import sys
 import pygame
 
 from pygame.locals import *
@@ -19,6 +20,22 @@ from material.texture import TextureMaterial
 from extras.movement_rig import MovementRig
 
 # Implementation of "Beach Runner" game
+
+from button import Button
+
+pygame.init()
+
+SCREEN = pygame.display.set_mode((1280, 720))
+pygame.display.set_caption("Menu")
+
+BG = pygame.image.load("assets/Background.png")
+
+def get_font(size): # Returns Press-Start-2P in the desired size
+    return pygame.font.Font("assets/font.ttf", size)
+
+def get_title_font(size): # Returns Press-Start-2P in the desired size
+    return pygame.font.Font("assets/Jersey20-Regular.ttf", size)
+
 
 
 class Example(Base):
@@ -105,7 +122,7 @@ class Example(Base):
         self.initialize()
         self.keys_pressed = pygame.key.get_pressed()
         self.clock = pygame.time.Clock()
-        pygame.init()
+        #pygame.init()
         while not self.is_game_over:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -252,7 +269,67 @@ class Example(Base):
         new_y = max(0, current_pos[1] - self.gravity)
         self.kite.set_position([current_pos[0], new_y, current_pos[2]])
 
+def options():
+    while True:
+        OPTIONS_MOUSE_POS = pygame.mouse.get_pos()
 
+        SCREEN.fill("white")
 
-# Instantiate this class and run the program
-Example(screen_size=[1280, 800]).run()
+        OPTIONS_TEXT = get_font(45).render("This is the OPTIONS screen.", True, "Black")
+        OPTIONS_RECT = OPTIONS_TEXT.get_rect(center=(640, 260))
+        SCREEN.blit(OPTIONS_TEXT, OPTIONS_RECT)
+
+        OPTIONS_BACK = Button(image=None, pos=(640, 460), 
+                            text_input="BACK", font=get_font(75), base_color="Black", hovering_color="Green")
+
+        OPTIONS_BACK.changeColor(OPTIONS_MOUSE_POS)
+        OPTIONS_BACK.update(SCREEN)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if OPTIONS_BACK.checkForInput(OPTIONS_MOUSE_POS):
+                    main_menu()
+
+        pygame.display.update()
+
+def main_menu():
+    while True:
+        SCREEN.blit(BG, (0, 0))
+
+        MENU_MOUSE_POS = pygame.mouse.get_pos()
+
+        MENU_TEXT = get_title_font(100).render("Beach Runner!!!", True, "#b68f40")
+        MENU_RECT = MENU_TEXT.get_rect(center=(640, 100))
+
+        PLAY_BUTTON = Button(image=pygame.image.load("assets/Play Rect.png"), pos=(640, 250), 
+                            text_input="PLAY", font=get_font(75), base_color="#d7fcd4", hovering_color="White")
+        OPTIONS_BUTTON = Button(image=pygame.image.load("assets/Options Rect.png"), pos=(640, 400), 
+                            text_input="OPTIONS", font=get_font(75), base_color="#d7fcd4", hovering_color="White")
+        QUIT_BUTTON = Button(image=pygame.image.load("assets/Quit Rect.png"), pos=(640, 550), 
+                            text_input="QUIT", font=get_font(75), base_color="#d7fcd4", hovering_color="White")
+
+        SCREEN.blit(MENU_TEXT, MENU_RECT)
+
+        for button in [PLAY_BUTTON, OPTIONS_BUTTON, QUIT_BUTTON]:
+            button.changeColor(MENU_MOUSE_POS)
+            button.update(SCREEN)
+        
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if PLAY_BUTTON.checkForInput(MENU_MOUSE_POS):
+                    Example(screen_size=[1280, 800]).run()
+                if OPTIONS_BUTTON.checkForInput(MENU_MOUSE_POS):
+                    options()
+                if QUIT_BUTTON.checkForInput(MENU_MOUSE_POS):
+                    pygame.quit()
+                    sys.exit()
+
+        pygame.display.update()
+
+main_menu()
