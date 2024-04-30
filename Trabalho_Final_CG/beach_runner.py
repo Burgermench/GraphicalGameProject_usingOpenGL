@@ -21,6 +21,8 @@ from extras.movement_rig import MovementRig
 
 # Implementation of "Beach Runner" game
 
+# SE QUISEREM CORRE O JOGO SEM O MENU VÃO ATÉ O FIM DO FICHEIRO
+
 from button import Button
 
 pygame.init()
@@ -332,4 +334,8 @@ def main_menu():
 
         pygame.display.update()
 
+#SEM MENU
+#Example(screen_size=[1280, 800]).run()
+
+#COM MENU
 main_menu()
