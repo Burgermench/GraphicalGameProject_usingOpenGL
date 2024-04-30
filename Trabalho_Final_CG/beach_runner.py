@@ -182,7 +182,7 @@ class Example(Base):
             #Pontos/Moedas e Score
             self.check_points_hud()
             self.points += 1 #idealmente self.points += check_coins()
-            self.score += 1
+            self.score += 1 #distancia????
             
             if self.lane_switching and (pygame.time.get_ticks() - self.switch_timer) >= self.switch_delay:
                 self.lane_switching = False
@@ -197,6 +197,12 @@ class Example(Base):
                     "Jersey20", 40, True, text="Pontos: " + str(self.points))
                 self.hud_scene.add(self.points_label)
                 self.old_points = self.points
+
+    #check coins example????
+    def check_coins(self):
+        #if player_position == coin_position:
+            #self.points += 1
+        return 0
         
     def handle_input(self, keys=None):  # Add 'keys=None' as an argument with default value
         if keys is None:
