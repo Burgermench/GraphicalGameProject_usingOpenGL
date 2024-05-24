@@ -1,0 +1,12 @@
+# Blender 4.1.1 MTL File: 'None'
+# www.blender.org
+
+newmtl bark
+Ns 0.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 1
+map_Kd C:/Users/Tatiana/Desktop/4 Ano/Computacao Grafica/ProjetoPython/p_grupo_beachrun_cg/Trabalho_Final_CG/Blender/C:/Users/Tatiana/Desktop/4 Ano/Computacao Grafica/Objetos de praia/texturas/bark.png
