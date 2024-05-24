@@ -337,9 +337,9 @@ class Example(Base):
         
         # Render the player
         self.player_rig = MovementRig()
-        self.player_geometry = Model("blender/player.obj")
+        self.player_geometry = Model("../player.obj")
         self.player_material = TextureMaterial(texture=Texture(
-            file_name="images/gradiente1.jpg"))  # Placeholder for player texture
+            file_name="../../images/gradiente1.jpg"))  # Placeholder for player texture
         self.player = Mesh(self.player_geometry, self.player_material)
         self.player.set_position([0, 2, 21])  # Initial position of the player
         self.player.scale(0.3)
