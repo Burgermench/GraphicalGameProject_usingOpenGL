@@ -62,8 +62,6 @@ class Example(Base):
         # Calcular a largura do terreno
         ground_width = self.lane_width * self.lane_count + self.lane_spacing * (self.lane_count - 1)
 
-        ground_width = self.lane_width * self.lane_count + self.lane_spacing * (self.lane_count - 1)
-
         ground_geometry = RectangleGeometry(width=ground_width, height=100)
         ground_material = TextureMaterial(texture=Texture(
             file_name="images/grass.jpg"), property_dict={"repeatUV": [50, 50]})
@@ -72,23 +70,33 @@ class Example(Base):
         self.ground.set_position([0, -0.5, 0])
         self.scene.add(self.ground)
 
-        sea_geometry = RectangleGeometry(width=ground_width, height=100)
-        sea_material = TextureMaterial(texture=Texture(
-            file_name="images/sand.jpg"), property_dict={"repeatUV": [50, 50]})
-        self.sea = Mesh(sea_geometry, sea_material)
-        self.sea.rotate_x(-math.pi/2)
-        self.sea.set_position([ground_width, -0.5, 0])
-        self.scene.add(self.sea)
-
         # Render the floor
         floor_geometry = RectangleGeometry(width=15, height=100)
         floor_material = TextureMaterial(
             texture=Texture(file_name="images/floor_temple.jpg"))
         self.floor = Mesh(floor_geometry, floor_material)
         self.floor.rotate_x(-math.pi/2)
+        
         # Adjust the y-position to place the floor on top of the grass
         self.floor.set_position([0, -0.4, 0])
+        self.floor_initial_position = self.floor.get_position()
         self.scene.add(self.floor)
+        
+        # Render the floor
+        floor_2_geometry = RectangleGeometry(width=15, height=100)
+        floor_2_material = TextureMaterial(
+            texture=Texture(file_name="images/floor_temple.jpg"))
+        self.floor_2 = Mesh(floor_2_geometry, floor_2_material)
+        self.floor_2.rotate_x(-math.pi/2)
+        
+        # Adjust the y-position to place the floor on top of the grass
+        self.floor_2.set_position([0, -0.4, -100])
+        self.floor_2_initial_position = self.floor_2.get_position()
+        self.scene.add(self.floor_2)
+        
+    
+    
+    
         # Render the kite
         self.kite_rig = MovementRig()
         self.kite_geometry = MolduraGeometryKite()
@@ -175,18 +183,6 @@ class Example(Base):
         # Set the movement speed for the treadmill effect
         movement_speed = 100  # Adjust as needed
 
-        # Translate the floor mesh
-        translation_vector = [0, 0, -movement_speed * delta_time]
-        self.floor.translate(translation_vector)
-
-        # Get the current position of the floor
-        floor_pos = self.floor.get_position()
-
-        # Check if the floor has moved completely out of view
-        if floor_pos[2] <= -1000:
-            # Reposition the floor in front of its original position
-            self.floor.set_position([0, -0.4, 0])
-
 
 
 
@@ -244,12 +240,18 @@ class Example(Base):
         # Move the floor towards the player using a translation vector
         translation_vector = [0, -0.2, 0]  # Adjust the speed as needed
         self.floor.translate(translation_vector)
+        self.floor_2.translate(translation_vector)
+        
+        print("Floor 2 =", self.floor_2.get_position()[2])
     
         # Check if the floor has moved completely out of view
         floor_pos = self.floor.get_position()
-        if floor_pos[2] <= -100:
-            # Reposition the floor in front of its original position
-            self.floor.set_position([0, -0.4, 0])
+        floor_2_pos = self.floor_2.get_position()
+        print("Floor 1 =", self.floor.get_position()[2])
+        if floor_pos[2] >= 100:
+            self.floor.set_position(self.floor_2_initial_position)
+        if floor_2_pos[2] >= 100:
+            self.floor_2.set_position(self.floor_2_initial_position)
 
     def move_obstacles(self):
         # Move the floor instead of obstacles
@@ -261,7 +263,7 @@ class Example(Base):
             # Move obstacle towards the player
             obstacle.translate([0, 0, 0.2])
             # Keep obstacles within a certain range
-            if obstacle.get_position()[2] < 30 or obstacle.get_position()[2] > -30:
+            if obstacle.get_position()[2] < 30:
                 new_obstacles.append(obstacle)
             else:
                 # Remove obstacle from the scene if it's too far
