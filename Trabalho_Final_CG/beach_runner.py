@@ -274,14 +274,14 @@ class Example(Base):
                     self.WHITE_001.set_position([-16.5, -22.5, 26])
                     self.WHITE_001_initial_position = self.WHITE_001.get_position()
                     self.scene.add(self.WHITE_001)
-                elif filename.find("WHITE") != -1:
-                    WHITE_geometry = Model("WHITE.obj")
-                    WHITE_material = TextureMaterial(texture=Texture(file_name="../../images/sand.jpg"))
-                    self.WHITE = Mesh(WHITE_geometry, WHITE_material)
-                    self.WHITE.rotate_x(-math.pi/2)
-                    self.WHITE.set_position([-16.5, -22.5, 26])
-                    self.WHITE_initial_position = self.WHITE.get_position()
-                    self.scene.add(self.WHITE)
+                #elif filename.find("WHITE") != -1:
+                #    WHITE_geometry = Model("WHITE.obj")
+                #    WHITE_material = TextureMaterial(texture=Texture(file_name="../../images/sand.jpg"))
+                #    self.WHITE = Mesh(WHITE_geometry, WHITE_material)
+                #    self.WHITE.rotate_x(-math.pi/2)
+                #    self.WHITE.set_position([-16.5, -22.5, 26])
+                #    self.WHITE_initial_position = self.WHITE.get_position()
+                #    self.scene.add(self.WHITE)
             
         # Render the floor
         floor_geometry = RectangleGeometry(width=15, height=100)
