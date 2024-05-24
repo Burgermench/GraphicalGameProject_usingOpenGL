@@ -1,5 +1,6 @@
 import math
 import pygame
+import time
 
 from pygame.locals import *
 from random import randint, choice
@@ -13,6 +14,8 @@ from core_ext.texture import Texture
 
 from geometry.moldura import MolduraGeometry
 from geometry.moldura_kite import MolduraGeometryKite
+from geometry.moldura_folhas import Moldura_Folhas
+from geometry.moldura_tronco import Moldura_Tronco
 from geometry.rectangle import RectangleGeometry
 
 from material.texture import TextureMaterial
@@ -29,7 +32,7 @@ class Example(Base):
     # Initialize any prerequisites for the game logic
     def initialize(self):
         # Meta-info
-        self.debug = True   # turn ON or OFF
+        self.debug = False   # turn ON or OFF
         self.fps = 60
         # TODO: implement as tuple for logging info to files and/or terminal (with timestamps)
         self.frame = 0
@@ -56,33 +59,63 @@ class Example(Base):
         self.switch_timer: int = 0
         # Adjust the delay time as needed (in milliseconds)
         self.switch_delay: int = 100
-        # Render the ground and lanes
-        ground_geometry = RectangleGeometry(
-            width=self.lane_width*self.lane_count+self.lane_spacing*(self.lane_count-1), height=100)
+        # Calcular a largura do terreno
+        ground_width = self.lane_width * self.lane_count + self.lane_spacing * (self.lane_count - 1)
+
+        ground_width = self.lane_width * self.lane_count + self.lane_spacing * (self.lane_count - 1)
+
+        ground_geometry = RectangleGeometry(width=ground_width, height=100)
         ground_material = TextureMaterial(texture=Texture(
             file_name="images/grass.jpg"), property_dict={"repeatUV": [50, 50]})
-        ground = Mesh(ground_geometry, ground_material)
-        ground.rotate_x(-math.pi/2)
-        ground.set_position([0, -0.5, 0])
-        self.scene.add(ground)
+        self.ground = Mesh(ground_geometry, ground_material)
+        self.ground.rotate_x(-math.pi/2)
+        self.ground.set_position([0, -0.5, 0])
+        self.scene.add(self.ground)
+
+        sea_geometry = RectangleGeometry(width=ground_width, height=100)
+        sea_material = TextureMaterial(texture=Texture(
+            file_name="images/sand.jpg"), property_dict={"repeatUV": [50, 50]})
+        self.sea = Mesh(sea_geometry, sea_material)
+        self.sea.rotate_x(-math.pi/2)
+        self.sea.set_position([ground_width, -0.5, 0])
+        self.scene.add(self.sea)
+
         # Render the floor
         floor_geometry = RectangleGeometry(width=15, height=100)
         floor_material = TextureMaterial(
             texture=Texture(file_name="images/floor_temple.jpg"))
-        floor = Mesh(floor_geometry, floor_material)
-        floor.rotate_x(-math.pi/2)
+        self.floor = Mesh(floor_geometry, floor_material)
+        self.floor.rotate_x(-math.pi/2)
         # Adjust the y-position to place the floor on top of the grass
-        floor.set_position([0, -0.4, 0])
-        self.scene.add(floor)
+        self.floor.set_position([0, -0.4, 0])
+        self.scene.add(self.floor)
         # Render the kite
         self.kite_rig = MovementRig()
         self.kite_geometry = MolduraGeometryKite()
         self.kite_material = TextureMaterial(texture=Texture(
-            file_name="images/fire1.jpg"))  # Placeholder for kite texture
+            file_name="images/gradiente1.jpg"))  # Placeholder for kite texture
         self.kite = Mesh(self.kite_geometry, self.kite_material)
         self.kite.set_position([0, 2, 20])  # Initial position of the kite
         self.scene.add(self.kite)
         self.kite_rig.add(self.kite)
+
+        grid_texture = Texture(file_name="images/bark.png")
+        material = TextureMaterial(texture=grid_texture)
+        grid_texture2 = Texture(file_name="images/palm-leaf-texture.jpg")
+        material2 = TextureMaterial(texture=grid_texture2)
+
+        #PALMEIRA
+        self.geo_1 = MovementRig()
+        geometry1 = Moldura_Tronco('palmeira_textura_tronco.obj')
+        geometry2 = Moldura_Folhas('palmeira_textura_folhas.obj')
+        self.mesh_1 = Mesh(geometry1, material)
+        self.mesh_2 = Mesh(geometry2, material2)
+        self.mesh_1.set_position([8, -0.4, 10])  # Ajuste a posição do primeiro objeto
+        self.mesh_2.set_position([8, -0.4, 10])
+        
+        self.scene.add(self.mesh_1)
+        self.scene.add(self.mesh_2)
+
         # Set some needed attributes for the game logic
         self.clock: pygame.time.Clock = None
         self.is_game_paused = False
@@ -124,6 +157,7 @@ class Example(Base):
             self.clock.tick(0)
         else:
             self.clock.tick(self.fps)
+
         if not self.is_game_over:
             self.move_obstacles()
             self.check_collision()
@@ -132,7 +166,29 @@ class Example(Base):
             if self.lane_switching and (pygame.time.get_ticks() - self.switch_timer) >= self.switch_delay:
                 self.lane_switching = False
         else:
-            print(f"Game Over! Your _score: {self.score}")
+            print(f"Game Over! Your score: {self.score}")
+
+        current_time = time.time()
+        self.previous_time = current_time
+        delta_time = current_time - self.previous_time
+
+        # Set the movement speed for the treadmill effect
+        movement_speed = 100  # Adjust as needed
+
+        # Translate the floor mesh
+        translation_vector = [0, 0, -movement_speed * delta_time]
+        self.floor.translate(translation_vector)
+
+        # Get the current position of the floor
+        floor_pos = self.floor.get_position()
+
+        # Check if the floor has moved completely out of view
+        if floor_pos[2] <= -1000:
+            # Reposition the floor in front of its original position
+            self.floor.set_position([0, -0.4, 0])
+
+
+
 
     def handle_input(self, keys=None):  # Add 'keys=None' as an argument with default value
         if keys is None:
@@ -184,25 +240,40 @@ class Example(Base):
             new_y = max(0, kite_pos[1] - self.gravity)
             self.kite.set_position([kite_pos[0], new_y, kite_pos[2]])
     
+    def move_floor(self):
+        # Move the floor towards the player using a translation vector
+        translation_vector = [0, -0.2, 0]  # Adjust the speed as needed
+        self.floor.translate(translation_vector)
+    
+        # Check if the floor has moved completely out of view
+        floor_pos = self.floor.get_position()
+        if floor_pos[2] <= -100:
+            # Reposition the floor in front of its original position
+            self.floor.set_position([0, -0.4, 0])
+
     def move_obstacles(self):
+        # Move the floor instead of obstacles
+        self.move_floor()
+
+        # Now handle the spawning and adding of obstacles as before
         new_obstacles = []
         for obstacle in self.obstacles:
-            # Move obstacle towards the player using Object3D method
-            obstacle.translate(0, 0, 0.2)
-            # Keep _obstacles within a certain range
-            if obstacle.global_position[2] < 30 or obstacle.global_position[2] > -30:
+            # Move obstacle towards the player
+            obstacle.translate([0, 0, 0.2])
+            # Keep obstacles within a certain range
+            if obstacle.get_position()[2] < 30 or obstacle.get_position()[2] > -30:
                 new_obstacles.append(obstacle)
             else:
                 # Remove obstacle from the scene if it's too far
                 self.scene.remove(obstacle)
         self.obstacles = new_obstacles
         self.spawn_obstacle()
+
     
-    # Add obstacle at random time
     def spawn_obstacle(self):
-        if len(self.obstacles) < 5 and randint(0, 20) == 0:
+        if len(self.obstacles) < 10 and randint(0, 20) == 0:
             self.add_obstacle()
-            
+
     def add_obstacle(self):
         obstacle_geometry = MolduraGeometry()
         obstacle_material = TextureMaterial(texture=Texture(
@@ -215,6 +286,7 @@ class Example(Base):
         obstacle.set_position([obstacle_x, 0, -20])
         self.scene.add(obstacle)
         self.obstacles.append(obstacle)
+        
 
     def check_collision(self):
         kite_pos = self.kite.get_position()  # Retrieve kite position
