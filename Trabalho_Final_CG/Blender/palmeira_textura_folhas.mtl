@@ -1,0 +1,22 @@
+# Blender 4.0.2 MTL File: 'palmeira_textura.blend'
+# www.blender.org
+
+newmtl bark
+Ns 0.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 1
+map_Kd Blender_objetos/palm_tree/uploads_files_4607039_textures/bark.png
+
+newmtl leaf
+Ns 0.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 1
+map_Kd Blender_objetos/palm_tree/uploads_files_4607039_textures/palm-leaf-texture.jpg
