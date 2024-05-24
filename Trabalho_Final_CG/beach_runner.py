@@ -13,7 +13,6 @@ from core_ext.scene import Scene
 from core_ext.texture import Texture
 
 from geometry.moldura import MolduraGeometry
-from geometry.moldura_kite import MolduraGeometryKite
 from geometry.moldura_folhas import Moldura_Folhas
 from geometry.moldura_tronco import Moldura_Tronco
 from geometry.rectangle import RectangleGeometry
@@ -22,7 +21,13 @@ from geometry.model import Model
 from material.texture import TextureMaterial
 from extras.movement_rig import MovementRig
 
+
 import os
+
+from geometry.model import Model
+
+from core.matrix import *
+
 
 # Implementation of "Beach Runner" game
 
@@ -48,12 +53,16 @@ class Example(Base):
         self.rig.add(self.camera)
         self.scene.add(self.rig)
         self.rig.set_position([0, 2, 25])
+        
+        
         # Sky
         sky_geometry = RectangleGeometry(width=250, height=250)
         sky_material = TextureMaterial(texture=Texture(
             file_name="images/sky.jpg"), property_dict={"repeatUV": [5, 5]})
         sky = Mesh(sky_geometry, sky_material)
         self.scene.add(sky)
+        
+        
         # Ground and Lanes
         self.lane_width: int = 1
         self.lane_count: int = 3
@@ -62,6 +71,11 @@ class Example(Base):
         self.switch_timer: int = 0
         # Adjust the delay time as needed (in milliseconds)
         self.switch_delay: int = 100
+        
+        
+        # FLOOR INFORMATION 
+        
+        
         # Calcular a largura do terreno
         ground_width = self.lane_width * self.lane_count + self.lane_spacing * (self.lane_count - 1)
 
@@ -282,7 +296,7 @@ class Example(Base):
                 #    self.WHITE.set_position([-16.5, -22.5, 26])
                 #    self.WHITE_initial_position = self.WHITE.get_position()
                 #    self.scene.add(self.WHITE)
-            
+
         # Render the floor
         floor_geometry = RectangleGeometry(width=15, height=100)
         floor_material = TextureMaterial(
@@ -305,8 +319,6 @@ class Example(Base):
         # Adjust the y-position to place the floor on top of the grass
         self.floor_2.set_position([0, -0.4, -100])
         self.floor_2_initial_position = self.floor_2.get_position()
-        self.scene.add(self.floor_2)
-        
         # Render the sea
         sea_geometry = RectangleGeometry(width=15, height=100)
         sea_material = TextureMaterial(
@@ -318,34 +330,26 @@ class Example(Base):
         self.sea.set_position([15, -0.4, 0])
         self.sea_initial_position = self.sea.get_position()
         self.scene.add(self.sea)
+        self.scene.add(self.floor_2)    
     
-    
-        # Render the kite
-        self.kite_rig = MovementRig()
-        self.kite_geometry = Model("../kite2.obj")
-        self.kite_material = TextureMaterial(texture=Texture(
-            file_name="../../images/gradiente1.jpg"))  # Placeholder for kite texture
-        self.kite = Mesh(self.kite_geometry, self.kite_material)
-        self.kite.set_position([0, 2, 20])  # Initial position of the kite
-        self.scene.add(self.kite)
-        self.kite_rig.add(self.kite)
+        # ALL THINGS RELATED TO PLAYER
+        
+        
+        # Render the player
+        self.player_rig = MovementRig()
+        self.player_geometry = Model("blender/player.obj")
+        self.player_material = TextureMaterial(texture=Texture(
+            file_name="images/gradiente1.jpg"))  # Placeholder for player texture
+        self.player = Mesh(self.player_geometry, self.player_material)
+        self.player.set_position([0, 2, 21])  # Initial position of the player
+        self.player.scale(0.3)
+        self.scene.add(self.player)
+        self.player_rig.add(self.player)
 
         grid_texture = Texture(file_name="../../images/bark.png")
         material = TextureMaterial(texture=grid_texture)
         grid_texture2 = Texture(file_name="../../images/palm-leaf-texture.jpg")
         material2 = TextureMaterial(texture=grid_texture2)
-
-        #PALMEIRA
-        self.geo_1 = MovementRig()
-        geometry1 = Model("../palmeira_textura_tronco.obj")
-        geometry2 = Model("../palmeira_textura_folhas.obj")
-        self.mesh_1 = Mesh(geometry1, material)
-        self.mesh_2 = Mesh(geometry2, material2)
-        self.mesh_1.set_position([8, -0.4, 10])  # Ajuste a posição do primeiro objeto
-        self.mesh_2.set_position([8, -0.4, 10])
-        
-        self.scene.add(self.mesh_1)
-        self.scene.add(self.mesh_2)
 
         # Set some needed attributes for the game logic
         self.clock: pygame.time.Clock = None
@@ -353,13 +357,15 @@ class Example(Base):
         self.is_game_over = False
         self.fps = 60
         self.score = 0
-        self.gravity = 0.1
+        self.gravity = 1
         self.terminal_velocity = 5
         self.jumping = False
         self.sliding = False
         self.jump_speed = 1
-        self.jump_height = 4
+        self.jump_height = 2.5
         self.jump_duration = 60
+        self.slide_duration = 20
+        self.slide_time = 0
         self.obstacles = []
         self.keys_pressed = []
         self.last_key: str = None
@@ -393,6 +399,7 @@ class Example(Base):
             self.move_obstacles()
             self.check_collision()
             self.apply_gravity()
+            self.slide()
             self.score += 1
             if self.lane_switching and (pygame.time.get_ticks() - self.switch_timer) >= self.switch_delay:
                 self.lane_switching = False
@@ -402,12 +409,7 @@ class Example(Base):
         current_time = time.time()
         self.previous_time = current_time
         delta_time = current_time - self.previous_time
-
-        # Set the movement speed for the treadmill effect
-        movement_speed = 100  # Adjust as needed
-
-
-
+            
 
     def handle_input(self, keys=None):  # Add 'keys=None' as an argument with default value
         if keys is None:
@@ -421,7 +423,7 @@ class Example(Base):
             self.rig.move_left(0.1)
         if keys[K_d]:
             self.rig.move_right(0.1)
-        # Kite movement
+        # player movement
         if keys[K_LEFT]:  # Move left
             if not self.lane_switching:
                 self.move_to_lane(-2)
@@ -432,12 +434,13 @@ class Example(Base):
                 self.move_to_lane(2)
                 self.lane_switching = True
                 self.switch_timer = pygame.time.get_ticks()
-        if keys[K_UP] and not self.jumping:  # Jump
+        if keys[K_UP] and not self.jumping and not self.sliding:  # Jump
             self.jumping = True
-            self.jump_start_y = self.kite.get_position()[1]
+            self.jump_start_y = self.player.get_position()[1]
             self.jump_time = 0
-        if keys[K_DOWN]:  # Slide (TODO: Implement slide)
-            self.slide()
+        if keys[K_DOWN] and not self.sliding and not self.jumping:  # Slide (TODO: Implement slide)
+            self.sliding = True
+            self.slide_time = 0
         if keys[K_ESCAPE] and self.is_game_paused:
             self.is_game_paused = False
         elif keys[K_ESCAPE] and not self.is_game_paused:
@@ -447,30 +450,27 @@ class Example(Base):
     # HELPER FUNCTIONS
 
     def apply_gravity(self):
-        kite_pos = self.kite.get_position()
+        player_pos = self.player.get_position()
         if self.jumping:
-            self.jump_time += 1
+            self.jump_time += 2
             jump_progress = min(self.jump_time / self.jump_duration, 1)
             new_y = self.jump_start_y + self.jump_height * math.sin(jump_progress * math.pi)
-            self.kite.set_position([kite_pos[0], new_y, kite_pos[2]])
+            self.player.set_position([player_pos[0], new_y, player_pos[2]])
             if self.jump_time >= self.jump_duration:
                 self.jumping = False
-        elif kite_pos[1] > 0:
-            new_y = max(0, kite_pos[1] - self.gravity)
-            self.kite.set_position([kite_pos[0], new_y, kite_pos[2]])
+        elif player_pos[1] > 0:
+            new_y = max(0, player_pos[1] - self.gravity)
+            self.player.set_position([player_pos[0], new_y, player_pos[2]])
     
     def move_floor(self):
         # Move the floor towards the player using a translation vector
         translation_vector = [0, -0.2, 0]  # Adjust the speed as needed
         self.floor.translate(translation_vector)
         self.floor_2.translate(translation_vector)
-        
-        print("Floor 2 =", self.floor_2.get_position()[2])
     
         # Check if the floor has moved completely out of view
         floor_pos = self.floor.get_position()
         floor_2_pos = self.floor_2.get_position()
-        print("Floor 1 =", self.floor.get_position()[2])
         if floor_pos[2] >= 100:
             self.floor.set_position(self.floor_2_initial_position)
         if floor_2_pos[2] >= 100:
@@ -514,24 +514,24 @@ class Example(Base):
         
 
     def check_collision(self):
-        kite_pos = self.kite.get_position()  # Retrieve kite position
-        kite_radius = 0.75 # Adjust the kite radius as needed
+        player_pos = self.player.get_position()  # Retrieve player position
+        player_radius = 0.75 # Adjust the player radius as needed
         for obstacle in self.obstacles:
             obstacle_pos = obstacle.get_position()  # Retrieve obstacle position
             obstacle_radius = 0.005  # Adjust the obstacle radius as needed
-            # Calculate the distance between the kite and the obstacle along each axis
-            dx = kite_pos[0] - obstacle_pos[0]
-            dy = kite_pos[1] - obstacle_pos[1]
-            dz = kite_pos[2] - obstacle_pos[2]
+            # Calculate the distance between the player and the obstacle along each axis
+            dx = player_pos[0] - obstacle_pos[0]
+            dy = player_pos[1] - obstacle_pos[1]
+            dz = player_pos[2] - obstacle_pos[2]
             # Check for collision along each axis
-            if abs(dx) < kite_radius + obstacle_radius and abs(dy) < kite_radius + obstacle_radius and abs(dz) < kite_radius + obstacle_radius:
+            if abs(dx) < player_radius + obstacle_radius and abs(dy) < player_radius + obstacle_radius and abs(dz) < player_radius + obstacle_radius:
                 print(
-                    f"Collision detected! Kite position: {kite_pos}, Obstacle position: {obstacle_pos}")
+                    f"Collision detected! player position: {player_pos}, Obstacle position: {obstacle_pos}")
                 self.is_game_over = True
                 break  # Exit the loop if a collision is detected
 
     def move_to_lane(self, direction):
-        current_pos = self.kite.get_position()
+        current_pos = self.player.get_position()
         lane_width = 2  # Width of each lane
         current_lane = round(current_pos[0] / lane_width)
         # Calculate the target lane based on the direction
@@ -541,13 +541,26 @@ class Example(Base):
         # Calculate the target position based on the target lane
         new_pos_x = target_lane * lane_width
         # Move to the target lane directly without considering lane change speed
-        self.kite.set_position([new_pos_x, current_pos[1], current_pos[2]])
+        self.player.set_position([new_pos_x, current_pos[1], current_pos[2]])
 
     def slide(self):
-        current_pos = self.kite.get_position()
-        # Ensure kite doesn't go beneath the ground
-        new_y = max(0, current_pos[1] - self.gravity)
-        self.kite.set_position([current_pos[0], new_y, current_pos[2]])
+        if self.sliding:
+            current_pos = self.player.get_position()
+            self.slide_time += 2
+            if self.slide_time >= self.slide_duration:
+                self.sliding = False
+                for x in range (0, self.slide_time, 2):
+                    self.player.rotate_x(-0.1)
+                self.player.set_position([0, 2, 21])
+                
+            # Ensure player doesn't go beneath the ground
+            new_y = max(0, current_pos[1] - self.gravity)
+            self.player.set_position([current_pos[0], new_y, current_pos[2]])
+            self.player.rotate_x(0.1)
+            print("SLIDING")
+        
+        
+        
 
 
 
