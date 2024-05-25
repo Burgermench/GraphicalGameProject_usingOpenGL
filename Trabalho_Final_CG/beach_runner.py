@@ -193,12 +193,17 @@ class Example(Base):
         # Rendering, camera e objetos
         self.renderer = Renderer()
         self.scene = Scene()
-        self.camera = Camera(aspect_ratio=self.screen_size[0] / self.screen_size[1])
+        self.camera = Camera(aspect_ratio=self.screen_size[0] / self.screen_size[1], angle_of_view=80)
         self.rig = MovementRig()
         self.rig.add(self.camera)
         self.scene.add(self.rig)
         self.rig.set_position([0, 2, 25])
         self.berma_Parent = Object3D()
+        self.berma_2_Parent = Object3D()
+        self.berma_3_Parent = Object3D()
+        self.berma_Parent_initpos = [-16.5, -22.5, 26]
+        self.berma_2_Parent_initpos = [-16.5, -22.5, 0]
+        self.berma_3_Parent_initpos = [-16.5, -22.5, -26]
         
         # Sky
         sky_geometry = RectangleGeometry(width=250, height=250)
@@ -241,6 +246,19 @@ class Example(Base):
                     self.berma.set_position([-16.5, -22.5, 26])
                     self.berma_Parent._parent = self.berma
                     self.scene.add(self.berma)
+                    
+                    self.berma2 = Mesh(berma_geometry, berma_material)
+                    self.berma2.rotate_x(-math.pi/2)
+                    self.berma2.set_position([-16.5, -22.5, 0])
+                    self.berma_2_Parent._parent = self.berma2
+                    self.scene.add(self.berma2)
+                    
+                    self.berma3 = Mesh(berma_geometry, berma_material)
+                    self.berma3.rotate_x(-math.pi/2)
+                    self.berma3.set_position([-16.5, -22.5, -26])
+                    self.berma_3_Parent._parent = self.berma3
+                    self.scene.add(self.berma3)
+                    
                 elif filename.find("cama_almofada") != -1:
                     cama_almofada_geometry = Model(filename)
                     cama_almofada_material = TextureMaterial(texture=Texture(file_name="../../images/1.jpg"))
@@ -712,9 +730,33 @@ class Example(Base):
             self.player.set_position([player_pos[0], new_y, player_pos[2]])
     
     def mover_scenario(self):
-        self.berma_Parent.translate(0, -0.2, 0)
-        if self.berma_Parent.global_position[2] >= 100:
-            self.berma_Parent.set_position([-16.5, -22.5, 26])
+        parent1 = self.berma_Parent.parent
+        parent1.translate([0, -0.2, 0])
+        parent2 = self.berma_2_Parent.parent
+        parent2.translate([0, -0.2, 0])
+        parent3 = self.berma_3_Parent.parent
+        parent3.translate([0, -0.2, 0])
+        
+        for child in self.berma_Parent.children_list:
+             child.translate([0, -0.2, 0])
+        for child in self.berma_2_Parent.children_list:
+             child.translate([0, -0.2, 0])
+        for child in self.berma_3_Parent.children_list:
+             child.translate([0, -0.2, 0])
+        
+        if self.berma_Parent.global_position[2] >= 75:
+            self.berma_Parent.parent.set_position(self.berma_3_Parent_initpos)
+            for child in self.berma_Parent.children_list:
+                child.set_position(self.berma_3_Parent_initpos)
+        if self.berma_2_Parent.global_position[2] >= 75:
+             self.berma_2_Parent.parent.set_position(self.berma_3_Parent_initpos)
+             for child in self.berma_2_Parent.children_list:
+                child.set_position(self.berma_3_Parent_initpos)
+        if self.berma_3_Parent.global_position[2] >= 75:
+             self.berma_3_Parent.parent.set_position(self.berma_3_Parent_initpos)
+             for child in self.berma_3_Parent.children_list:
+                child.set_position(self.berma_3_Parent_initpos)
+            
         
     
     def move_floor(self):
