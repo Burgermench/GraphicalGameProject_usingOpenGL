@@ -18,6 +18,7 @@ from core_ext.scene import Scene
 from core_ext.texture import Texture
 
 from geometry.moldura import MolduraGeometry
+from geometry.moldura_kite import MolduraGeometryKite
 from geometry.moldura_folhas import Moldura_Folhas
 from geometry.moldura_tronco import Moldura_Tronco
 from geometry.rectangle import RectangleGeometry
@@ -459,28 +460,27 @@ class Example(Base):
         self.double_points_end_time = 0
         self.double_points_active = False  # Controle para "2x"
 
-        # Adicionando a navbar
+        # Ajustando a navbar com tamanhos adequados
         self.points_label = create_text(
-            "Jersey20", 2000, True, text="Pontos: " + str(self.points), position=[0, 550])
+            "Jersey20", 40, True, text="Pontos: " + str(self.points), position=[50, 550])
         self.hud_scene.add(self.points_label)
-        self.double_points_label = create_text(
-            "Jersey20", 2000, True, width=80, text="2x", position=[20, 450])
 
-        # Distância
+        self.double_points_label = create_text(
+            "Jersey20", 40, True, width=80, text="2x", position=[50, 450])
+
         self.distance = 0
         self.distance_label = create_text(
-            "Jersey20", 2000, True , text="Distância: " + str(self.distance) + "m", position=[500, 550])
+            "Jersey20", 40, True, text="Distância: " + str(self.distance) + "m", position=[550, 450])
         self.hud_scene.add(self.distance_label)
+
+        self.high_score_label = create_text(
+            "Jersey20", 40, True, text="High Score: " + str(self.high_score), position=[550, 550])
+        self.hud_scene.add(self.high_score_label)
 
         self.update_interval = 1000  # 1 second
         self.last_update_time = pygame.time.get_ticks()
         self.distance_update_interval = 2000  # 2 seconds
         self.last_distance_update_time = pygame.time.get_ticks()
-
-        # Add high score display
-        self.high_score_label = create_text(
-            "Jersey20", 30, True, text="High Score: " + str(self.high_score), position=[400, 550])
-        self.hud_scene.add(self.high_score_label)
         
     # Starts and loops the game until the game is over
     def run(self):
@@ -691,7 +691,7 @@ class Example(Base):
     def update_distance_hud(self):
         self.hud_scene.remove(self.distance_label)
         self.distance_label = create_text(
-            "Jersey20", 30, True, text="Distância: " + str(self.distance) + "m", position=[600, 550])
+            "Jersey20", 40, True, text="Distância: " + str(self.distance) + "m", position=[550, 450])
         self.hud_scene.add(self.distance_label)
 
     def check_coins(self):
@@ -804,27 +804,49 @@ class Example(Base):
     def add_obstacles(self, num_obstacles=2):
         geometries = [
             "../../Blender/cama-praia_textura3.obj",
+            "../../Blender/kitev3.obj",
+            "../../Blender/surfboard_v4.obj",
+            "../../Blender/oculos.obj",
             "../../Blender/moedas.obj"
         ]
 
         geometry_to_texture = {
             "../../Blender/cama-praia_textura3.obj": "../../images/1.jpg",
+            "../../Blender/kitev3.obj": "../../images/gradiente1.jpg",
+            "../../Blender/surfboard_v4.obj": "../../images/textura_prancha.jpg",
+            "../../Blender/oculos.obj": "../../images/textura_oculos.jpg",
             "../../Blender/moedas.obj": "../../images/cor_moeda.jpg",
         }
 
         for _ in range(num_obstacles):
             obstacle_geometry_class = choice(geometries)
-            obstacle_geometry = Model(obstacle_geometry_class)
+            if obstacle_geometry_class == "../../Blender/kitev3.obj":
+                obstacle_geometry = MolduraGeometryKite()
+            else:
+                obstacle_geometry = Model(obstacle_geometry_class)
             obstacle_geometry.file_name = obstacle_geometry_class  # Adicionando o atributo file_name
             texture_file = geometry_to_texture[obstacle_geometry_class]
             obstacle_material = TextureMaterial(texture=Texture(file_name=texture_file))
             obstacle_lane = choice([-1.5, 0, 1.5])
             obstacle_x = obstacle_lane * 2
             obstacle_z = randint(-30, -10)
+
+            # Define the Y position based on the type of obstacle
+            if obstacle_geometry_class == "../../Blender/kitev3.obj":
+                obstacle_y = 2  # Adjust this value to set the kite at the desired height
+            elif obstacle_geometry_class == "../../Blender/oculos.obj":
+                obstacle_y = -1  # Adjust this value to set the glasses at the desired height
+            else:
+                obstacle_y = 0  # Ground level for other obstacles
+            
+
             obstacle = Mesh(obstacle_geometry, obstacle_material)
-            obstacle.set_position([obstacle_x, 0, obstacle_z])
+            obstacle.set_position([obstacle_x, obstacle_y, obstacle_z])
+
             self.scene.add(obstacle)
             self.obstacles.append(obstacle)
+
+
 
     def check_collision(self):
         player_pos = self.player.get_position()
@@ -838,10 +860,16 @@ class Example(Base):
             if abs(dx) < player_radius + obstacle_radius and abs(dy) < player_radius + obstacle_radius and abs(dz) < player_radius + obstacle_radius:
                 if obstacle.geometry.file_name == "../../Blender/moedas.obj":
                     self.points += self.check_coins()
-                    # Remove the coin from the scene after collision
+                    print("MOEDA")
                     if obstacle in self.obstacles:
                         self.scene.remove(obstacle)
                         self.obstacles.remove(obstacle)
+                #elif obstacle.geometry.file_name == "../../Blender/oculos.obj":
+                #    print("Power-up collected! All obstacles removed.")
+                #    # Remove all obstacles from the scene
+                #    if obstacle in self.obstacles:
+                #        self.scene.remove(obstacle)
+                #        self.obstacles.remove(obstacle)
                 else:
                     print(f"Collision detected! player position: {player_pos}, Obstacle position: {obstacle_pos}")
                     self.is_game_over = True
