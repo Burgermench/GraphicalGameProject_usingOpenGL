@@ -185,6 +185,7 @@ class Example(Base):
         self.fps = 60
         self.frame = 0
         self.score = 0      # TODO: implement on bottom-right of screen
+        self.tempo = 0
         # HUD Scene
         self.hud_scene = Scene()
         self.hud_camera = Camera()
@@ -607,6 +608,8 @@ class Example(Base):
             # Pontos/Moedas e Score
             self.check_points_hud()
             self.check_double_points()
+            
+            self.tempo += 1 
 
             current_time = pygame.time.get_ticks()
             if current_time - self.last_update_time > self.update_interval:
@@ -688,12 +691,12 @@ class Example(Base):
             self.rig.move_right(0.1)
         # player movement
         if keys[K_LEFT]:  # Move left
-            if not self.lane_switching:
+            if not self.lane_switching and not self.jumping and not self.sliding:
                 self.move_to_lane(-2)
                 self.lane_switching = True
                 self.switch_timer = pygame.time.get_ticks()
         if keys[K_RIGHT]:  # Move right
-            if not self.lane_switching:
+            if not self.lane_switching and not self.sliding and not self.jumping:
                 self.move_to_lane(2)
                 self.lane_switching = True
                 self.switch_timer = pygame.time.get_ticks()
@@ -776,8 +779,12 @@ class Example(Base):
         # Now handle the spawning and adding of obstacles as before
         new_obstacles = []
         for obstacle in self.obstacles:
-            # Move obstacle towards the player
-            obstacle.translate([0, 0, 0.2])
+            if obstacle.get_position()[1] == 2:
+                new_y = 1 + math.sin(self.tempo * math.pi)
+                obstacle.translate([0, new_y, 0.4])    
+            else:
+                # Move obstacle towards the player
+                obstacle.translate([0, 0, 0.2])
             # Keep obstacles within a certain range
             if obstacle.get_position()[2] < 30:
                 new_obstacles.append(obstacle)
@@ -854,7 +861,7 @@ class Example(Base):
                     obstacle_y = 0
     
                 obstacle.set_position([obstacle_x, obstacle_y, obstacle_z])
-    
+
                 self.scene.add(obstacle)
                 self.obstacles.append(obstacle)
 
