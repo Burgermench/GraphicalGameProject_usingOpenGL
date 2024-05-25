@@ -16,6 +16,7 @@ from core_ext.mesh import Mesh
 from core_ext.renderer import Renderer
 from core_ext.scene import Scene
 from core_ext.texture import Texture
+from core_ext.object3d import Object3D
 
 from geometry.moldura import MolduraGeometry
 from geometry.moldura_kite import MolduraGeometryKite
@@ -161,6 +162,7 @@ class Example(Base):
         self.rig.add(self.camera)
         self.scene.add(self.rig)
         self.rig.set_position([0, 2, 25])
+        self.berma_Parent = Object3D()
         
         # Sky
         sky_geometry = RectangleGeometry(width=250, height=250)
@@ -201,184 +203,64 @@ class Example(Base):
                     self.berma = Mesh(berma_geometry, berma_material)
                     self.berma.rotate_x(-math.pi/2)
                     self.berma.set_position([-16.5, -22.5, 26])
-                    self.berma_initial_position = self.berma.get_position()
+                    self.berma_Parent._parent = self.berma
                     self.scene.add(self.berma)
-                elif filename.find("cama_almofada_001") != -1:
-                    cama_almofada_001_geometry = Model("cama_almofada_001.obj")
-                    cama_almofada_001_material = TextureMaterial(texture=Texture(file_name="../../images/sand.jpg"))
-                    self.cama_almofada_001 = Mesh(cama_almofada_001_geometry, cama_almofada_001_material)
-                    self.cama_almofada_001.rotate_x(-math.pi/2)
-                    self.cama_almofada_001.set_position([-16.5, -22.5, 26])
-                    self.cama_almofada_001_initial_position = self.cama_almofada_001.get_position()
-                    self.scene.add(self.cama_almofada_001)
-                elif filename.find("cama_almofada_002") != -1:
-                    cama_almofada_002_geometry = Model("cama_almofada_002.obj")
-                    cama_almofada_002_material = TextureMaterial(texture=Texture(file_name="../../images/sand.jpg"))
-                    self.cama_almofada_002 = Mesh(cama_almofada_002_geometry, cama_almofada_002_material)
-                    self.cama_almofada_002.rotate_x(-math.pi/2)
-                    self.cama_almofada_002.set_position([-16.5, -22.5, 26])
-                    self.cama_almofada_002_initial_position = self.cama_almofada_002.get_position()
-                    self.scene.add(self.cama_almofada_002)
                 elif filename.find("cama_almofada") != -1:
-                    cama_almofada_geometry = Model("cama_almofada.obj")
-                    cama_almofada_material = TextureMaterial(texture=Texture(file_name="../../images/sand.jpg"))
+                    cama_almofada_geometry = Model(filename)
+                    cama_almofada_material = TextureMaterial(texture=Texture(file_name="../../images/1.jpg"))
                     self.cama_almofada = Mesh(cama_almofada_geometry, cama_almofada_material)
-                    self.cama_almofada.rotate_x(-math.pi/2)
-                    self.cama_almofada.set_position([-16.5, -22.5, 26])
-                    self.cama_almofada_initial_position = self.cama_almofada.get_position()
-                    self.scene.add(self.cama_almofada)
-                elif filename.find("cama_base_001") != -1:
-                    cama_base_001_geometry = Model("cama_base_001.obj")
-                    cama_base_001_material = TextureMaterial(texture=Texture(file_name="../../images/sand.jpg"))
-                    self.cama_base_001 = Mesh(cama_base_001_geometry, cama_base_001_material)
-                    self.cama_base_001.rotate_x(-math.pi/2)
-                    self.cama_base_001.set_position([-16.5, -22.5, 26])
-                    self.cama_base_001_initial_position = self.cama_base_001.get_position()
-                    self.scene.add(self.cama_base_001)
-                elif filename.find("cama_base_002") != -1:
-                    cama_base_002_geometry = Model("cama_base_002.obj")
-                    cama_base_002_material = TextureMaterial(texture=Texture(file_name="../../images/sand.jpg"))
-                    self.cama_base_002 = Mesh(cama_base_002_geometry, cama_base_002_material)
-                    self.cama_base_002.rotate_x(-math.pi/2)
-                    self.cama_base_002.set_position([-16.5, -22.5, 26])
-                    self.cama_base_002_initial_position = self.cama_base_002.get_position()
-                    self.scene.add(self.cama_base_002)
+                    self.berma_Parent.add(self.cama_almofada)
+                    #self.scene.add(self.cama_almofada)
                 elif filename.find("cama_base") != -1:
-                    cama_base_geometry = Model("cama_base.obj")
-                    cama_base_material = TextureMaterial(texture=Texture(file_name="../../images/sand.jpg"))
+                    cama_base_geometry = Model(filename)
+                    cama_base_material = TextureMaterial(texture=Texture(file_name="../../images/2.jpg"))
                     self.cama_base = Mesh(cama_base_geometry, cama_base_material)
-                    self.cama_base.rotate_x(-math.pi/2)
-                    self.cama_base.set_position([-16.5, -22.5, 26])
-                    self.cama_base_initial_position = self.cama_base.get_position()
-                    self.scene.add(self.cama_base)
-                elif filename.find("cama_cama_001") != -1:
-                    cama_cama_001_geometry = Model("cama_cama_001.obj")
-                    cama_cama_001_material = TextureMaterial(texture=Texture(file_name="../../images/sand.jpg"))
-                    self.cama_cama_001 = Mesh(cama_cama_001_geometry, cama_cama_001_material)
-                    self.cama_cama_001.rotate_x(-math.pi/2)
-                    self.cama_cama_001.set_position([-16.5, -22.5, 26])
-                    self.cama_cama_001_initial_position = self.cama_cama_001.get_position()
-                    self.scene.add(self.cama_cama_001)
-                elif filename.find("cama_cama_002") != -1:
-                    cama_cama_002_geometry = Model("cama_cama_002.obj")
-                    cama_cama_002_material = TextureMaterial(texture=Texture(file_name="../../images/sand.jpg"))
-                    self.cama_cama_002 = Mesh(cama_cama_002_geometry, cama_cama_002_material)
-                    self.cama_cama_002.rotate_x(-math.pi/2)
-                    self.cama_cama_002.set_position([-16.5, -22.5, 26])
-                    self.cama_cama_002_initial_position = self.cama_cama_002.get_position()
-                    self.scene.add(self.cama_cama_002)
+                    self.berma_Parent.add(self.cama_base)
+                    #self.scene.add(self.cama_base)
                 elif filename.find("cama_cama") != -1:
-                    cama_cama_geometry = Model("cama_cama.obj")
-                    cama_cama_material = TextureMaterial(texture=Texture(file_name="../../images/sand.jpg"))
+                    cama_cama_geometry = Model(filename)
+                    cama_cama_material = TextureMaterial(texture=Texture(file_name="../../images/1.jpg"))
                     self.cama_cama = Mesh(cama_cama_geometry, cama_cama_material)
-                    self.cama_cama.rotate_x(-math.pi/2)
-                    self.cama_cama.set_position([-16.5, -22.5, 26])
-                    self.cama_cama_initial_position = self.cama_cama.get_position()
-                    self.scene.add(self.cama_cama)
-                elif filename.find("palm_folhas_001") != -1:
-                    palm_folhas_001_geometry = Model("palm_folhas_001.obj")
-                    palm_folhas_001_material = TextureMaterial(texture=Texture(file_name="../../images/sand.jpg"))
-                    self.palm_folhas_001 = Mesh(palm_folhas_001_geometry, palm_folhas_001_material)
-                    self.palm_folhas_001.rotate_x(-math.pi/2)
-                    self.palm_folhas_001.set_position([-16.5, -22.5, 26])
-                    self.palm_folhas_001_initial_position = self.palm_folhas_001.get_position()
-                    self.scene.add(self.palm_folhas_001)
-                elif filename.find("palm_folhas_002") != -1:
-                    palm_folhas_002_geometry = Model("palm_folhas_002.obj")
-                    palm_folhas_002_material = TextureMaterial(texture=Texture(file_name="../../images/sand.jpg"))
-                    self.palm_folhas_002 = Mesh(palm_folhas_002_geometry, palm_folhas_002_material)
-                    self.palm_folhas_002.rotate_x(-math.pi/2)
-                    self.palm_folhas_002.set_position([-16.5, -22.5, 26])
-                    self.palm_folhas_002_initial_position = self.palm_folhas_002.get_position()
-                    self.scene.add(self.palm_folhas_002)
-                elif filename.find("palm_folhas_003") != -1:
-                    palm_folhas_003_geometry = Model("palm_folhas_003.obj")
-                    palm_folhas_003_material = TextureMaterial(texture=Texture(file_name="../../images/sand.jpg"))
-                    self.palm_folhas_003 = Mesh(palm_folhas_003_geometry, palm_folhas_003_material)
-                    self.palm_folhas_003.rotate_x(-math.pi/2)
-                    self.palm_folhas_003.set_position([-16.5, -22.5, 26])
-                    self.palm_folhas_003_initial_position = self.palm_folhas_003.get_position()
-                    self.scene.add(self.palm_folhas_003)
+                    self.berma_Parent.add(self.cama_cama)
+                    #self.scene.add(self.cama_cama)
                 elif filename.find("palm_folhas") != -1:
-                    palm_folhas_geometry = Model("palm_folhas.obj")
-                    palm_folhas_material = TextureMaterial(texture=Texture(file_name="../../images/sand.jpg"))
+                    palm_folhas_geometry = Model(filename)
+                    palm_folhas_material = TextureMaterial(texture=Texture(file_name="../../images/palm-leaf-texture.jpg"))
                     self.palm_folhas = Mesh(palm_folhas_geometry, palm_folhas_material)
-                    self.palm_folhas.rotate_x(-math.pi/2)
-                    self.palm_folhas.set_position([-16.5, -22.5, 26])
-                    self.palm_folhas_initial_position = self.palm_folhas.get_position()
-                    self.scene.add(self.palm_folhas)
-                elif filename.find("palm_trunk_001") != -1:
-                    palm_trunk_001_geometry = Model("palm_trunk_001.obj")
-                    palm_trunk_001_material = TextureMaterial(texture=Texture(file_name="../../images/sand.jpg"))
-                    self.palm_trunk_001 = Mesh(palm_trunk_001_geometry, palm_trunk_001_material)
-                    self.palm_trunk_001.rotate_x(-math.pi/2)
-                    self.palm_trunk_001.set_position([-16.5, -22.5, 26])
-                    self.palm_trunk_001_initial_position = self.palm_trunk_001.get_position()
-                    self.scene.add(self.palm_trunk_001)
-                elif filename.find("palm_trunk_002") != -1:
-                    palm_trunk_002_geometry = Model("palm_trunk_002.obj")
-                    palm_trunk_002_material = TextureMaterial(texture=Texture(file_name="../../images/sand.jpg"))
-                    self.palm_trunk_002 = Mesh(palm_trunk_002_geometry, palm_trunk_002_material)
-                    self.palm_trunk_002.rotate_x(-math.pi/2)
-                    self.palm_trunk_002.set_position([-16.5, -22.5, 26])
-                    self.palm_trunk_002_initial_position = self.palm_trunk_002.get_position()
-                    self.scene.add(self.palm_trunk_002)
-                elif filename.find("palm_trunk_003") != -1:
-                    palm_trunk_003_geometry = Model("palm_trunk_003.obj")
-                    palm_trunk_003_material = TextureMaterial(texture=Texture(file_name="../../images/sand.jpg"))
-                    self.palm_trunk_003 = Mesh(palm_trunk_003_geometry, palm_trunk_003_material)
-                    self.palm_trunk_003.rotate_x(-math.pi/2)
-                    self.palm_trunk_003.set_position([-16.5, -22.5, 26])
-                    self.palm_trunk_003_initial_position = self.palm_trunk_003.get_position()
-                    self.scene.add(self.palm_trunk_003)
+                    self.berma_Parent.add(self.palm_folhas)
+                    #self.scene.add(self.palm_folhas)
                 elif filename.find("palm_trunk") != -1:
-                    palm_trunk_geometry = Model("palm_trunk.obj")
-                    palm_trunk_material = TextureMaterial(texture=Texture(file_name="../../images/sand.jpg"))
+                    palm_trunk_geometry = Model(filename)
+                    palm_trunk_material = TextureMaterial(texture=Texture(file_name="../../images/bark.png"))
                     self.palm_trunk = Mesh(palm_trunk_geometry, palm_trunk_material)
-                    self.palm_trunk.rotate_x(-math.pi/2)
-                    self.palm_trunk.set_position([-16.5, -22.5, 26])
                     self.palm_trunk_initial_position = self.palm_trunk.get_position()
-                    self.scene.add(self.palm_trunk)
-                elif filename.find("RED_001") != -1:
-                    RED_001_geometry = Model("RED_001.obj")
-                    RED_001_material = TextureMaterial(texture=Texture(file_name="../../images/sand.jpg"))
-                    self.RED_001 = Mesh(RED_001_geometry, RED_001_material)
-                    self.RED_001.rotate_x(-math.pi/2)
-                    self.RED_001.set_position([-16.5, -22.5, 26])
-                    self.RED_001_initial_position = self.RED_001.get_position()
-                    self.scene.add(self.RED_001)
+                    self.berma_Parent.add(self.palm_trunk)
+                    #self.scene.add(self.palm_trunk)
                 elif filename.find("RED") != -1:
-                    RED_geometry = Model("RED.obj")
-                    RED_material = TextureMaterial(texture=Texture(file_name="../../images/sand.jpg"))
-                    self.RED = Mesh(RED_geometry, RED_material)
-                    self.RED.rotate_x(-math.pi/2)
-                    self.RED.set_position([-16.5, -22.5, 26])
-                    self.RED_initial_position = self.RED.get_position()
-                    self.scene.add(self.RED)
-                elif filename.find("TOP_001") != -1:
-                    TOP_001_geometry = Model("TOP_001.obj")
-                    TOP_001_material = TextureMaterial(texture=Texture(file_name="../../images/sand.jpg"))
-                    self.TOP_001 = Mesh(TOP_001_geometry, TOP_001_material)
-                    self.TOP_001.rotate_x(-math.pi/2)
-                    self.TOP_001.set_position([-16.5, -22.5, 26])
-                    self.TOP_001_initial_position = self.TOP_001.get_position()
-                    self.scene.add(self.TOP_001)
+                    red_geometry = Model(filename)
+                    red_material = TextureMaterial(texture=Texture(file_name="../../images/gradiente1.jpg"))
+                    self.red = Mesh(red_geometry, red_material)
+                    self.berma_Parent.add(self.red)
+                    #self.scene.add(self.red)
                 elif filename.find("TOP") != -1:
-                    TOP_geometry = Model("TOP.obj")
-                    TOP_material = TextureMaterial(texture=Texture(file_name="../../images/sand.jpg"))
-                    self.TOP = Mesh(TOP_geometry, TOP_material)
-                    self.TOP.rotate_x(-math.pi/2)
-                    self.TOP.set_position([-16.5, -22.5, 26])
-                    self.TOP_initial_position = self.TOP.get_position()
-                    self.scene.add(self.TOP)
+                    top_geometry = Model(filename)
+                    top_material = TextureMaterial(texture=Texture(file_name="../../images/gradiente1.jpg"))
+                    self.top = Mesh(top_geometry, top_material)
+                    self.berma_Parent.add(self.top)
+                    #self.scene.add(self.top)
                 elif filename.find("WHITE_001") != -1:
-                    WHITE_001_geometry = Model("WHITE_001.obj")
-                    WHITE_001_material = TextureMaterial(texture=Texture(file_name="../../images/sand.jpg"))
-                    self.WHITE_001 = Mesh(WHITE_001_geometry, WHITE_001_material)
-                    self.WHITE_001.rotate_x(-math.pi/2)
-                    self.WHITE_001.set_position([-16.5, -22.5, 26])
-                    self.WHITE_001_initial_position = self.WHITE_001.get_position()
-                    self.scene.add(self.WHITE_001)
+                    white_geometry = Model(filename)
+                    white_material = TextureMaterial(texture=Texture(file_name="../../images/grass.jpg"))
+                    self.white = Mesh(white_geometry, white_material)
+                    self.berma_Parent.add(self.white)
+                    #self.scene.add(self.white)
+                else:
+                    children = self.berma_Parent.children_list
+                    for child in children:
+                        child.rotate_x(-math.pi/2)
+                        child.set_position([-16.5, -22.5, 26])
+                        self.scene.add(child)
+                
 
         # Render the floor
         floor_geometry = RectangleGeometry(width=15, height=100)
@@ -522,7 +404,7 @@ class Example(Base):
         while True:
             MENU_MOUSE_POS = pygame.mouse.get_pos()
             SCREEN.fill("black")
-            GAME_OVER_TEXT = get_title_font_ingame(100).render("GAME OVER", True, "Red")
+            GAME_OVER_TEXT = get_title_font_ingame(100).render("GAME OVER", True, "red")
             GAME_OVER_RECT = GAME_OVER_TEXT.get_rect(center=(640, 200))
             SCREEN.blit(GAME_OVER_TEXT, GAME_OVER_RECT)
 
@@ -766,7 +648,14 @@ class Example(Base):
             new_y = max(0, player_pos[1] - self.gravity)
             self.player.set_position([player_pos[0], new_y, player_pos[2]])
     
+    def mover_scenario(self):
+        self.berma_Parent.translate(0, -0.2, 0)
+        if self.berma_Parent.global_position[2] >= 100:
+            self.berma_Parent.set_position([-16.5, -22.5, 26])
+        
+    
     def move_floor(self):
+        self.mover_scenario()
         # Move the floor towards the player using a translation vector
         translation_vector = [0, -0.2, 0]  # Adjust the speed as needed
         self.floor.translate(translation_vector)
@@ -783,7 +672,6 @@ class Example(Base):
     def move_obstacles(self):
         # Move the floor instead of obstacles
         self.move_floor()
-
         # Now handle the spawning and adding of obstacles as before
         new_obstacles = []
         for obstacle in self.obstacles:
