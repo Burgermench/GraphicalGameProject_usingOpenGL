@@ -502,7 +502,7 @@ class Example(Base):
         self.hud_scene.add(self.points_label)
 
         self.double_points_label = create_text(
-            "Jersey20", 40, True, width=80, text="2x", position=[50, 450])
+            "Jersey20", 40, True, width=80, text="2x", color=[255,0,0], position=[50, 450])
 
         self.distance = 0
         self.distance_label = create_text(
@@ -554,8 +554,6 @@ class Example(Base):
     def show_game_over_menu(self):
         stop_music()
         play_music(game_over_menu_music)
-    
-    
     
         def get_position(index):
             screen_width, screen_height = SCREEN.get_size()
@@ -622,8 +620,6 @@ class Example(Base):
                         sys.exit()
 
             pygame.display.update()
-
-
 
     def show_congratulations_menu(self):
         stop_music()
@@ -733,7 +729,7 @@ class Example(Base):
             self.hud_scene.remove(self.points_label)
             points_text = f"Pontos: {self.points}"
             self.points_label = create_text(
-                "Jersey20", 40, True, width=300, text=points_text, position=[50, 550])
+                "Jersey20", 40, True, text=points_text, position=[50, 550])
             self.hud_scene.add(self.points_label)
             self.old_points = self.points
 
@@ -866,50 +862,71 @@ class Example(Base):
 
     def add_obstacles(self, num_obstacles=2):
         geometries = [
-            "../../Blender/cama-praia_textura3.obj",
+            "../../Blender/cama_almofada.obj",
+            "../../Blender/cama_base.obj",
+            "../../Blender/cama_cama.obj",
             "../../Blender/kitev3.obj",
             "../../Blender/surfboard_v4.obj",
             "../../Blender/oculos.obj",
             "../../Blender/moedas.obj"
         ]
-
+    
         geometry_to_texture = {
-            "../../Blender/cama-praia_textura3.obj": "../../images/1.jpg",
+            "../../Blender/cama_cama.obj": "../../images/1.jpg",
+            "../../Blender/cama_base.obj": "../../images/2.jpg",
+            "../../Blender/cama_almofada.obj": "../../images/almofada.jpg",
             "../../Blender/kitev3.obj": "../../images/gradiente1.jpg",
             "../../Blender/surfboard_v4.obj": "../../images/textura_prancha.jpg",
             "../../Blender/oculos.obj": "../../images/textura_oculos.jpg",
             "../../Blender/moedas.obj": "../../images/cor_moeda.jpg",
         }
-
+    
         for _ in range(num_obstacles):
+            # Escolha uma posição aleatória para a cama de praia
             obstacle_geometry_class = choice(geometries)
-            if obstacle_geometry_class == "../../Blender/kitev3.obj":
-                obstacle_geometry = MolduraGeometryKite()
-            else:
-                obstacle_geometry = Model(obstacle_geometry_class)
-            obstacle_geometry.file_name = obstacle_geometry_class  # Adicionando o atributo file_name
-            texture_file = geometry_to_texture[obstacle_geometry_class]
-            obstacle_material = TextureMaterial(texture=Texture(file_name=texture_file))
             obstacle_lane = choice([-1.5, 0, 1.5])
             obstacle_x = obstacle_lane * 2
             obstacle_z = randint(-30, -10)
-
-            # Define the Y position based on the type of obstacle
-            if obstacle_geometry_class == "../../Blender/kitev3.obj":
-                obstacle_y = 2  # Adjust this value to set the kite at the desired height
-            elif obstacle_geometry_class == "../../Blender/oculos.obj":
-                obstacle_y = -0.5  # Adjust this value to set the glasses at the desired height
+    
+            # Verifique se o obstáculo é uma das partes da cama de praia
+            if obstacle_geometry_class in ["../../Blender/cama_almofada.obj", "../../Blender/cama_base.obj", "../../Blender/cama_cama.obj"]:
+                # Posicione os três objetos da cama de praia na posição escolhida
+                for cama_part in ["../../Blender/cama_almofada.obj", "../../Blender/cama_base.obj", "../../Blender/cama_cama.obj"]:
+                    obstacle_geometry = Model(cama_part)
+                    obstacle_geometry.file_name = cama_part
+                    texture_file = geometry_to_texture[cama_part]
+                    obstacle_material = TextureMaterial(texture=Texture(file_name=texture_file))
+    
+                    obstacle = Mesh(obstacle_geometry, obstacle_material)
+                    obstacle.set_position([obstacle_x, 0, obstacle_z])
+    
+                    self.scene.add(obstacle)
+                    self.obstacles.append(obstacle)
             else:
-                obstacle_y = 0  # Ground level for other obstacles
-            
-
-            obstacle = Mesh(obstacle_geometry, obstacle_material)
-            obstacle.set_position([obstacle_x, obstacle_y, obstacle_z])
-
-            self.scene.add(obstacle)
-            self.obstacles.append(obstacle)
-
-
+                # Restante do código para adicionar obstáculos aleatórios
+                if obstacle_geometry_class == "../../Blender/kitev3.obj":
+                    obstacle_geometry = MolduraGeometryKite()
+                else:
+                    obstacle_geometry = Model(obstacle_geometry_class)
+                obstacle_geometry.file_name = obstacle_geometry_class
+                texture_file = geometry_to_texture[obstacle_geometry_class]
+                obstacle_material = TextureMaterial(texture=Texture(file_name=texture_file))
+    
+                obstacle = Mesh(obstacle_geometry, obstacle_material)
+                obstacle_x = obstacle_lane * 2
+                obstacle_z = randint(-30, -10)
+    
+                if obstacle_geometry_class == "../../Blender/kitev3.obj":
+                    obstacle_y = 2
+                elif obstacle_geometry_class == "../../Blender/oculos.obj":
+                    obstacle_y = -0.5
+                else:
+                    obstacle_y = 0
+    
+                obstacle.set_position([obstacle_x, obstacle_y, obstacle_z])
+    
+                self.scene.add(obstacle)
+                self.obstacles.append(obstacle)
 
     def check_collision(self):
         player_pos = self.player.get_position()
