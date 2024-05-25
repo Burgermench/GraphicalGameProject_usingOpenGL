@@ -228,7 +228,7 @@ class Example(Base):
 
         ground_geometry = RectangleGeometry(width=ground_width, height=100)
         ground_material = TextureMaterial(texture=Texture(
-            file_name="images/grass.jpg"), property_dict={"repeatUV": [50, 50]})
+            file_name="images/sand.jpg"), property_dict={"repeatUV": [50, 50]})
         self.ground = Mesh(ground_geometry, ground_material)
         self.ground.rotate_x(-math.pi/2)
         self.ground.set_position([0, -0.5, 0])
@@ -339,14 +339,14 @@ class Example(Base):
         self.floor_2.set_position([0, -0.4, -100])
         self.floor_2_initial_position = self.floor_2.get_position()
         # Render the sea
-        sea_geometry = RectangleGeometry(width=15, height=100)
+        sea_geometry = RectangleGeometry(width=30, height=100)
         sea_material = TextureMaterial(
             texture=Texture(file_name="../../images/sea.jpg"))
         self.sea = Mesh(sea_geometry, sea_material)
         self.sea.rotate_x(-math.pi/2)
         
         # Adjust the y-position to place the floor on top of the grass
-        self.sea.set_position([15, -0.4, 0])
+        self.sea.set_position([22.5, -0.4, 0])
         self.sea_initial_position = self.sea.get_position()
         self.scene.add(self.sea)
         self.scene.add(self.floor_2)    
