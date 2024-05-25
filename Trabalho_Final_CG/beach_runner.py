@@ -2,6 +2,9 @@ import math
 import sys
 import pygame
 import time
+import cv2
+import threading
+import queue
 
 from pygame.locals import *
 from random import randint, choice
@@ -37,7 +40,8 @@ from button import Button
 pygame.init()
 pygame.mixer.init()
 
-SCREEN = pygame.display.set_mode((1280, 720))
+SCREEN_SIZE = (1280, 720)
+SCREEN = pygame.display.set_mode(SCREEN_SIZE)
 pygame.display.set_caption("Menu")
 
 BG = pygame.image.load("assets/Background.png")
@@ -46,6 +50,7 @@ BG = pygame.image.load("assets/Background.png")
 # Paths to your music files
 main_menu_music = "music/Wii Sports - Title (HQ) (320).mp3"
 game_music_1 = "music/Chemical Plant Zone Act 1 - Sonic Mania.mp3"
+record_points = "../../music/GODS-Video-Worlds-2023.mp3"
 game_over_menu_music = "../../music/Super Mario Bros. Music - Game Over.mp3"
 
 # Function to play music
@@ -56,8 +61,6 @@ def play_music(music_file):
 # Function to stop music
 def stop_music():
     pygame.mixer.music.stop()
-
-
 
 def get_font(size):  # Returns Press-Start-2P in the desired size
     return pygame.font.Font("assets/font.ttf", size)
@@ -82,17 +85,63 @@ def create_text(font, size, transparent, width=200, height=80, color=[0, 0, 200]
     mesh = Mesh(geometry, material)
     return mesh
 
+class VideoPlayer:
+    def __init__(self, video_path, screen_size, buffer_size=10):
+        self.cap = cv2.VideoCapture(video_path)
+        self.screen_size = screen_size
+        self.frame_queue = queue.Queue(maxsize=buffer_size)
+        self.running = True
+        self.thread = threading.Thread(target=self.update, args=())
+        self.thread.start()
+
+    def update(self):
+        while self.running:
+            ret, frame = self.cap.read()
+            if not ret:
+                self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                continue
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            frame = cv2.resize(frame, self.screen_size)
+            frame = pygame.surfarray.make_surface(frame)
+            if not self.frame_queue.full():
+                self.frame_queue.put(frame)
+
+    def get_frame(self):
+        if not self.frame_queue.empty():
+            return self.frame_queue.get()
+        return None
+
+    def stop(self):
+        self.running = False
+        self.thread.join()
+        self.cap.release()
+
 class Example(Base):
+    def __init__(self, screen_size):
+        super().__init__()
+        self.screen_size = screen_size
+        self.high_score_dir = os.path.join(os.getcwd(), "scores")
+        self.high_score_file = os.path.join(self.high_score_dir, "high_score.txt")
+        
+        # Ensure the directory exists
+        if not os.path.exists(self.high_score_dir):
+            os.makedirs(self.high_score_dir)
+        
+        self.high_score = self.load_high_score()
+        self.initial_directory = os.getcwd()  # Initialize initial_directory here
 
-    #########################################
-    # INIT
+    def load_high_score(self):
+        try:
+            with open(self.high_score_file, "r") as file:
+                return int(file.read())
+        except FileNotFoundError:
+            return 0
 
-    # Salve o diretório inicial
-    initial_directory = os.getcwd()
+    def save_high_score(self, score):
+        with open(self.high_score_file, "w") as file:
+            file.write(str(score))
 
-    # Initialize any prerequisites for the game logic
     def initialize(self):
-
         # Meta-info
         self.debug = False   # turn ON or OFF
         self.fps = 60
@@ -106,12 +155,11 @@ class Example(Base):
         # Rendering, camera e objetos
         self.renderer = Renderer()
         self.scene = Scene()
-        self.camera = Camera(aspect_ratio=1280/800)
+        self.camera = Camera(aspect_ratio=self.screen_size[0] / self.screen_size[1])
         self.rig = MovementRig()
         self.rig.add(self.camera)
         self.scene.add(self.rig)
         self.rig.set_position([0, 2, 25])
-        
         
         # Sky
         sky_geometry = RectangleGeometry(width=250, height=250)
@@ -119,7 +167,6 @@ class Example(Base):
             file_name="images/sky.jpg"), property_dict={"repeatUV": [5, 5]})
         sky = Mesh(sky_geometry, sky_material)
         self.scene.add(sky)
-        
         
         # Ground and Lanes
         self.lane_width: int = 1
@@ -130,9 +177,7 @@ class Example(Base):
         # Adjust the delay time as needed (in milliseconds)
         self.switch_delay: int = 100
         
-        
         # FLOOR INFORMATION 
-        
         
         # Calcular a largura do terreno
         ground_width = self.lane_width * self.lane_count + self.lane_spacing * (self.lane_count - 1)
@@ -432,6 +477,11 @@ class Example(Base):
         self.distance_update_interval = 2000  # 2 seconds
         self.last_distance_update_time = pygame.time.get_ticks()
 
+        # Add high score display
+        self.high_score_label = create_text(
+            "Jersey20", 30, True, text="High Score: " + str(self.high_score), position=[400, 550])
+        self.hud_scene.add(self.high_score_label)
+        
     # Starts and loops the game until the game is over
     def run(self):
         play_music(game_music_1)
@@ -453,19 +503,22 @@ class Example(Base):
             self.clock.tick(self.fps)
             pygame.display.flip()
         self.cleanup()
-        self.show_game_over_menu()
+        if self.points > self.high_score:
+            self.show_congratulations_menu()
+        else:
+            self.show_game_over_menu()
 
     def cleanup(self):
         pygame.display.quit()
         pygame.display.init()
         global SCREEN
-        SCREEN = pygame.display.set_mode((1280, 720))
+        SCREEN = pygame.display.set_mode(SCREEN_SIZE)
         pygame.display.set_caption("Menu")
 
-   
-
     def show_game_over_menu(self):
+        stop_music()
         play_music(game_over_menu_music)
+        
         while True:
             MENU_MOUSE_POS = pygame.mouse.get_pos()
             SCREEN.fill("black")
@@ -481,6 +534,10 @@ class Example(Base):
             DISTANCE_RECT = DISTANCE_TEXT.get_rect(center=(640, 400))
             SCREEN.blit(DISTANCE_TEXT, DISTANCE_RECT)
 
+            HIGH_SCORE_TEXT = get_font_ingame(50).render("High Score: " + str(self.high_score), True, "Yellow")
+            HIGH_SCORE_RECT = HIGH_SCORE_TEXT.get_rect(center=(640, 450))
+            SCREEN.blit(HIGH_SCORE_TEXT, HIGH_SCORE_RECT)
+
             RESTART_BUTTON = Button(image=pygame.image.load("../../assets/Play Rect.png"), pos=(640, 500), 
                             text_input="RESTART", font=get_font_ingame(75), base_color="#d7fcd4", hovering_color="White")
             QUIT_BUTTON = Button(image=pygame.image.load("../../assets/Quit Rect.png"), pos=(640, 650), 
@@ -490,9 +547,6 @@ class Example(Base):
                 button.changeColor(MENU_MOUSE_POS)
                 button.update(SCREEN)
                 
-               
-            
-
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
@@ -507,6 +561,77 @@ class Example(Base):
                         sys.exit()
 
             pygame.display.update()
+
+    def show_congratulations_menu(self):
+        stop_music()
+        play_music(record_points)
+
+        # Update high score if current score is higher
+        if self.points > self.high_score:
+            self.high_score = self.points
+            self.save_high_score(self.high_score)
+
+        # Load the video background
+        video_path = '../../video/GODS Worlds 2023 Video-Short.mp4'
+        video_player = VideoPlayer(video_path, SCREEN_SIZE)
+        
+
+        # Setup for the congratulatory message color change
+        color_index = 0
+        colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255)]
+        color_change_time = pygame.time.get_ticks()
+        color_change_interval = 500  # Change color every 500ms
+
+        clock = pygame.time.Clock()
+
+        while True:
+            frame = video_player.get_frame()
+            if frame:
+                SCREEN.blit(pygame.transform.rotate(frame, -90), (0, 0))
+
+            MENU_MOUSE_POS = pygame.mouse.get_pos()
+            
+            # Change text color
+            current_time = pygame.time.get_ticks()
+            if current_time - color_change_time > color_change_interval:
+                color_index = (color_index + 1) % len(colors)
+                color_change_time = current_time
+            
+            CONGRATULATIONS_TEXT = get_title_font_ingame(100).render("CONGRATULATIONS", True, colors[color_index])
+            CONGRATULATIONS_RECT = CONGRATULATIONS_TEXT.get_rect(center=(640, 200))
+            SCREEN.blit(CONGRATULATIONS_TEXT, CONGRATULATIONS_RECT)
+
+            NEW_HIGH_SCORE_TEXT = get_font_ingame(50).render("New High Score: " + str(self.points), True, "Yellow")
+            NEW_HIGH_SCORE_RECT = NEW_HIGH_SCORE_TEXT.get_rect(center=(640, 300))
+            SCREEN.blit(NEW_HIGH_SCORE_TEXT, NEW_HIGH_SCORE_RECT)
+
+            RESTART_BUTTON = Button(image=pygame.image.load("../../assets/Play Rect.png"), pos=(640, 400), 
+                            text_input="RESTART", font=get_font_ingame(75), base_color="#d7fcd4", hovering_color="White")
+            QUIT_BUTTON = Button(image=pygame.image.load("../../assets/Quit Rect.png"), pos=(640, 500), 
+                            text_input="QUIT", font=get_font_ingame(75), base_color="#d7fcd4", hovering_color="White")
+
+            for button in [RESTART_BUTTON, QUIT_BUTTON]:
+                button.changeColor(MENU_MOUSE_POS)
+                button.update(SCREEN)
+                
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    video_player.stop()
+                    pygame.quit()
+                    sys.exit()
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if RESTART_BUTTON.checkForInput(MENU_MOUSE_POS):
+                            stop_music()
+                            video_player.stop()
+                            os.chdir(self.initial_directory)  # Change back to the initial directory
+                            Example(screen_size=[1280, 800]).run()
+                    if QUIT_BUTTON.checkForInput(pygame.mouse.get_pos()):
+                        video_player.stop()
+                        pygame.quit()
+                        sys.exit()
+
+            pygame.display.update()
+            
 
     # Updates the game state
     def update(self):
@@ -780,11 +905,11 @@ def main_menu():
         MENU_RECT = MENU_TEXT.get_rect(center=(640, 100))
 
         PLAY_BUTTON = Button(image=pygame.image.load("assets/Play Rect.png"), pos=(640, 250), 
-                            text_input="PLAY", font=get_font(75), base_color="#d7fcd4", hovering_color="White")
+                            text_input="PLAY", font=get_font(75), base_color="#d7fcd4", hovering_color="Blue")
         OPTIONS_BUTTON = Button(image=pygame.image.load("assets/Options Rect.png"), pos=(640, 400), 
-                            text_input="OPTIONS", font=get_font(75), base_color="#d7fcd4", hovering_color="White")
+                            text_input="OPTIONS", font=get_font(75), base_color="#d7fcd4", hovering_color="Blue")
         QUIT_BUTTON = Button(image=pygame.image.load("assets/Quit Rect.png"), pos=(640, 550), 
-                            text_input="QUIT", font=get_font(75), base_color="#d7fcd4", hovering_color="White")
+                            text_input="QUIT", font=get_font(75), base_color="#d7fcd4", hovering_color="Blue")
 
         SCREEN.blit(MENU_TEXT, MENU_RECT)
 
