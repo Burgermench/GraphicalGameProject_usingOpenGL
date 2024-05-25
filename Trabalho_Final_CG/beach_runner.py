@@ -44,7 +44,7 @@ pygame.mixer.init()
 
 SCREEN_SIZE = (1280, 720)
 SCREEN = pygame.display.set_mode(SCREEN_SIZE)
-pygame.display.set_caption("Menu")
+pygame.display.set_caption("Beach Runner")
 
 BG = pygame.image.load("assets/Background.png")
 
@@ -86,6 +86,42 @@ def create_text(font, size, transparent, width=200, height=80, color=[0, 0, 200]
     material = TextureMaterial(message)
     mesh = Mesh(geometry, material)
     return mesh
+
+
+class Button():
+    def __init__(self, image, pos, text_input, font, base_color, hovering_color):
+        self.image = image
+        self.pos = pos
+        self.font = font
+        self.base_color = base_color
+        self.hovering_color = hovering_color
+        self.text_input = text_input
+        self.text = self.font.render(self.text_input, True, self.base_color)
+        
+        self.text_rect = self.text.get_rect(center=self.pos)
+        
+        # Scale the image to fit the text
+        text_width = self.text_rect.width
+        text_height = self.text_rect.height
+        self.image = pygame.transform.scale(self.image, (text_width + 50, text_height + 20))
+        
+        self.rect = self.image.get_rect(center=self.pos)
+    
+    def update(self, screen):
+        if self.image is not None:
+            screen.blit(self.image, self.rect)
+        screen.blit(self.text, self.text_rect)
+        
+    def changeColor(self, mouse_pos):
+        if self.checkForInput(mouse_pos):
+            self.text = self.font.render(self.text_input, True, self.hovering_color)
+        else:
+            self.text = self.font.render(self.text_input, True, self.base_color)
+    
+    def checkForInput(self, position):
+        if position[0] in range(self.rect.left, self.rect.right) and position[1] in range(self.rect.top, self.rect.bottom):
+            return True
+        return False
 
 class VideoPlayer:
     def __init__(self, video_path, screen_size, buffer_size=10):
@@ -395,35 +431,60 @@ class Example(Base):
         pygame.display.init()
         global SCREEN
         SCREEN = pygame.display.set_mode(SCREEN_SIZE)
-        pygame.display.set_caption("Menu")
+        pygame.display.set_caption("Beach Runner")
 
     def show_game_over_menu(self):
         stop_music()
         play_music(game_over_menu_music)
+    
+    
+    
+        def get_position(index):
+            screen_width, screen_height = SCREEN.get_size()
         
+            # Calculate the spacing and positions
+            total_elements = 6  # Number of text and buttons
+            vertical_margin = 20
+            element_height = (screen_height - vertical_margin * (total_elements + 1)) // total_elements
+            y_pos = vertical_margin * (index + 1) + element_height * index + element_height // 2
+            return (screen_width // 2, y_pos)
+    
         while True:
             MENU_MOUSE_POS = pygame.mouse.get_pos()
             SCREEN.fill("black")
-            GAME_OVER_TEXT = get_title_font_ingame(100).render("GAME OVER", True, "red")
-            GAME_OVER_RECT = GAME_OVER_TEXT.get_rect(center=(640, 200))
+            
+            GAME_OVER_TEXT = get_title_font_ingame(100).render("GAME OVER", True, "Red")
+            GAME_OVER_RECT = GAME_OVER_TEXT.get_rect(center=get_position(0))
             SCREEN.blit(GAME_OVER_TEXT, GAME_OVER_RECT)
 
             SCORE_TEXT = get_font_ingame(50).render("Score: " + str(self.points), True, "White")
-            SCORE_RECT = SCORE_TEXT.get_rect(center=(640, 300))
+            SCORE_RECT = SCORE_TEXT.get_rect(center=get_position(1))
             SCREEN.blit(SCORE_TEXT, SCORE_RECT)
 
             DISTANCE_TEXT = get_font_ingame(50).render("Distance: " + str(self.distance) + "m", True, "White")
-            DISTANCE_RECT = DISTANCE_TEXT.get_rect(center=(640, 400))
+            DISTANCE_RECT = DISTANCE_TEXT.get_rect(center=get_position(2))
             SCREEN.blit(DISTANCE_TEXT, DISTANCE_RECT)
 
             HIGH_SCORE_TEXT = get_font_ingame(50).render("High Score: " + str(self.high_score), True, "Yellow")
-            HIGH_SCORE_RECT = HIGH_SCORE_TEXT.get_rect(center=(640, 450))
+            HIGH_SCORE_RECT = HIGH_SCORE_TEXT.get_rect(center=get_position(3))
             SCREEN.blit(HIGH_SCORE_TEXT, HIGH_SCORE_RECT)
 
-            RESTART_BUTTON = Button(image=pygame.image.load("../../assets/Play Rect.png"), pos=(640, 500), 
-                            text_input="RESTART", font=get_font_ingame(75), base_color="#d7fcd4", hovering_color="White")
-            QUIT_BUTTON = Button(image=pygame.image.load("../../assets/Quit Rect.png"), pos=(640, 650), 
-                            text_input="QUIT", font=get_font_ingame(75), base_color="#d7fcd4", hovering_color="White")
+            RESTART_BUTTON = Button(
+                image=pygame.image.load("../../assets/Options Rect.png"),
+                pos=get_position(4),
+                text_input="RESTART",
+                font=get_font_ingame(75),
+                base_color="#d7fcd4",
+                hovering_color="Blue"
+            )
+            QUIT_BUTTON = Button(
+                image=pygame.image.load("../../assets/Quit Rect.png"),
+                pos=get_position(5),
+                text_input="QUIT",
+                font=get_font_ingame(75),
+                base_color="#d7fcd4",
+                hovering_color="Blue"
+            )
 
             for button in [RESTART_BUTTON, QUIT_BUTTON]:
                 button.changeColor(MENU_MOUSE_POS)
@@ -435,14 +496,16 @@ class Example(Base):
                     sys.exit()
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if RESTART_BUTTON.checkForInput(MENU_MOUSE_POS):
-                            stop_music()
-                            os.chdir(self.initial_directory)  # Change back to the initial directory
-                            Example(screen_size=[1280, 800]).run()
+                        stop_music()
+                        os.chdir(self.initial_directory)  # Change back to the initial directory
+                        Example(screen_size=[1280, 800]).run()
                     if QUIT_BUTTON.checkForInput(pygame.mouse.get_pos()):
                         pygame.quit()
                         sys.exit()
 
             pygame.display.update()
+
+
 
     def show_congratulations_menu(self):
         stop_music()
@@ -487,10 +550,10 @@ class Example(Base):
             NEW_HIGH_SCORE_RECT = NEW_HIGH_SCORE_TEXT.get_rect(center=(640, 300))
             SCREEN.blit(NEW_HIGH_SCORE_TEXT, NEW_HIGH_SCORE_RECT)
 
-            RESTART_BUTTON = Button(image=pygame.image.load("../../assets/Play Rect.png"), pos=(640, 400), 
-                            text_input="RESTART", font=get_font_ingame(75), base_color="#d7fcd4", hovering_color="White")
-            QUIT_BUTTON = Button(image=pygame.image.load("../../assets/Quit Rect.png"), pos=(640, 500), 
-                            text_input="QUIT", font=get_font_ingame(75), base_color="#d7fcd4", hovering_color="White")
+            RESTART_BUTTON = Button(image=pygame.image.load("../../assets/Play Rect.png"), pos=(640, 450), 
+                            text_input="RESTART",font=get_font_ingame(75), base_color="#d7fcd4", hovering_color="Blue")
+            QUIT_BUTTON = Button(image=pygame.image.load("../../assets/Quit Rect.png"), pos=(640, 600), 
+                            text_input="QUIT", font=get_font_ingame(75), base_color="#d7fcd4", hovering_color="Blue")
 
             for button in [RESTART_BUTTON, QUIT_BUTTON]:
                 button.changeColor(MENU_MOUSE_POS)
@@ -723,7 +786,7 @@ class Example(Base):
             if obstacle_geometry_class == "../../Blender/kitev3.obj":
                 obstacle_y = 2  # Adjust this value to set the kite at the desired height
             elif obstacle_geometry_class == "../../Blender/oculos.obj":
-                obstacle_y = -1  # Adjust this value to set the glasses at the desired height
+                obstacle_y = -0.5  # Adjust this value to set the glasses at the desired height
             else:
                 obstacle_y = 0  # Ground level for other obstacles
             

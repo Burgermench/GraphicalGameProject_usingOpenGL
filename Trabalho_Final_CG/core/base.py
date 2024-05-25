@@ -6,7 +6,7 @@ from core.utils import Utils
 
 
 class Base:
-    def __init__(self, screen_size=(512, 512)):
+    def __init__(self, screen_size=(1280, 720)):
         # Initialize all pygame modules
         pygame.init()
         # Indicate rendering details
@@ -20,7 +20,7 @@ class Base:
         # Create and display the window
         self._screen = pygame.display.set_mode(screen_size, display_flags)
         # Set the text that appears in the title bar of the window
-        pygame.display.set_caption("Computer Graphics")
+        pygame.display.set_caption("Beach Runner")
         # Determine if main loop is active
         self._running = True
         # Manage time-related data and operations
