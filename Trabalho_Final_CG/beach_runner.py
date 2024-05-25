@@ -24,13 +24,9 @@ from geometry.model import Model
 from material.texture import TextureMaterial
 from extras.movement_rig import MovementRig
 
-
 import os
 
-from geometry.model import Model
-
 from core.matrix import *
-
 
 # Implementation of "Beach Runner" game
 
@@ -39,17 +35,41 @@ from core.matrix import *
 from button import Button
 
 pygame.init()
+pygame.mixer.init()
 
 SCREEN = pygame.display.set_mode((1280, 720))
 pygame.display.set_caption("Menu")
 
 BG = pygame.image.load("assets/Background.png")
 
+#musica e sons
+# Paths to your music files
+main_menu_music = "music/Wii Sports - Title (HQ) (320).mp3"
+game_music_1 = "music/Chemical Plant Zone Act 1 - Sonic Mania.mp3"
+game_over_menu_music = "../../music/Super Mario Bros. Music - Game Over.mp3"
+
+# Function to play music
+def play_music(music_file):
+    pygame.mixer.music.load(music_file)
+    pygame.mixer.music.play(-1)  # -1 means the music will loop indefinitely
+
+# Function to stop music
+def stop_music():
+    pygame.mixer.music.stop()
+
+
+
 def get_font(size):  # Returns Press-Start-2P in the desired size
     return pygame.font.Font("assets/font.ttf", size)
 
 def get_title_font(size):  # Returns Press-Start-2P in the desired size
     return pygame.font.Font("assets/Jersey20-Regular.ttf", size)
+
+def get_font_ingame(size):  # Returns Press-Start-2P in the desired size
+    return pygame.font.Font("../../assets/font.ttf", size)
+
+def get_title_font_ingame(size):  # Returns Press-Start-2P in the desired size
+    return pygame.font.Font("../../assets/Jersey20-Regular.ttf", size)
 
 def create_text(font, size, transparent, width=200, height=80, color=[0, 0, 200], position=[0, 600], text: str = 'Sem texto'):
     geometry = RectangleGeometry(
@@ -66,6 +86,9 @@ class Example(Base):
 
     #########################################
     # INIT
+
+    # Salve o diretório inicial
+    initial_directory = os.getcwd()
 
     # Initialize any prerequisites for the game logic
     def initialize(self):
@@ -121,19 +144,6 @@ class Example(Base):
         self.ground.rotate_x(-math.pi/2)
         self.ground.set_position([0, -0.5, 0])
         self.scene.add(self.ground)
-
-       ### Render the berma
-       ##berma_geometry = Model("Blender/Berma_2.obj")
-       ##berma_material = TextureMaterial(
-       ##    texture=Texture(file_name="images/sand.jpg"))
-       ##self.berma = Mesh(berma_geometry, berma_material)
-       ##self.berma.rotate_x(-math.pi/2)
-       ##
-       ### Adjust the y-position to place the floor on top of the grass
-       ##self.berma.set_position([-16.5, -22.5, 26])
-       ##self.berma_initial_position = self.berma.get_position()
-       ##self.scene.add(self.berma)
-
 
         os.chdir(os.getcwd() + '/blender/berma')
 
@@ -323,14 +333,6 @@ class Example(Base):
                     self.WHITE_001.set_position([-16.5, -22.5, 26])
                     self.WHITE_001_initial_position = self.WHITE_001.get_position()
                     self.scene.add(self.WHITE_001)
-                #elif filename.find("WHITE") != -1:
-                #    WHITE_geometry = Model("WHITE.obj")
-                #    WHITE_material = TextureMaterial(texture=Texture(file_name="../../images/sand.jpg"))
-                #    self.WHITE = Mesh(WHITE_geometry, WHITE_material)
-                #    self.WHITE.rotate_x(-math.pi/2)
-                #    self.WHITE.set_position([-16.5, -22.5, 26])
-                #    self.WHITE_initial_position = self.WHITE.get_position()
-                #    self.scene.add(self.WHITE)
 
         # Render the floor
         floor_geometry = RectangleGeometry(width=15, height=100)
@@ -413,22 +415,16 @@ class Example(Base):
         self.double_points_active = False  # Controle para "2x"
 
         # Adicionando a navbar
-        navbar_geometry = RectangleGeometry(width=800, height=100, position=[0, 500])
-        navbar_material = TextureMaterial(texture=Texture(
-            file_name="images/sky.jpg"))  # Supondo que você tenha uma imagem de fundo para a navbar
-        navbar = Mesh(navbar_geometry, navbar_material)
-        self.hud_scene.add(navbar)
-
         self.points_label = create_text(
-            "Jersey20", 50, True, width=300, text="Pontos: " + str(self.points), position=[50, 550])
+            "Jersey20", 2000, True, text="Pontos: " + str(self.points), position=[0, 550])
         self.hud_scene.add(self.points_label)
         self.double_points_label = create_text(
-            "Jersey20", 50, True, width=80, text="2x", position=[350, 550])
+            "Jersey20", 2000, True, width=80, text="2x", position=[20, 450])
 
         # Distância
         self.distance = 0
         self.distance_label = create_text(
-            "Jersey20", 30, True, text="Distância: " + str(self.distance) + "m", position=[600, 550])
+            "Jersey20", 2000, True , text="Distância: " + str(self.distance) + "m", position=[500, 550])
         self.hud_scene.add(self.distance_label)
 
         self.update_interval = 1000  # 1 second
@@ -438,6 +434,8 @@ class Example(Base):
 
     # Starts and loops the game until the game is over
     def run(self):
+        play_music(game_music_1)
+        os.chdir(self.initial_directory)
         self.initialize()
         self.keys_pressed = pygame.key.get_pressed()
         self.clock = pygame.time.Clock()
@@ -464,33 +462,36 @@ class Example(Base):
         SCREEN = pygame.display.set_mode((1280, 720))
         pygame.display.set_caption("Menu")
 
+   
+
     def show_game_over_menu(self):
+        play_music(game_over_menu_music)
         while True:
             MENU_MOUSE_POS = pygame.mouse.get_pos()
             SCREEN.fill("black")
-            GAME_OVER_TEXT = get_title_font(100).render("GAME OVER", True, "Red")
+            GAME_OVER_TEXT = get_title_font_ingame(100).render("GAME OVER", True, "Red")
             GAME_OVER_RECT = GAME_OVER_TEXT.get_rect(center=(640, 200))
             SCREEN.blit(GAME_OVER_TEXT, GAME_OVER_RECT)
 
-            SCORE_TEXT = get_font(50).render("Score: " + str(self.points), True, "White")
+            SCORE_TEXT = get_font_ingame(50).render("Score: " + str(self.points), True, "White")
             SCORE_RECT = SCORE_TEXT.get_rect(center=(640, 300))
             SCREEN.blit(SCORE_TEXT, SCORE_RECT)
 
-            DISTANCE_TEXT = get_font(50).render("Distance: " + str(self.distance) + "m", True, "White")
+            DISTANCE_TEXT = get_font_ingame(50).render("Distance: " + str(self.distance) + "m", True, "White")
             DISTANCE_RECT = DISTANCE_TEXT.get_rect(center=(640, 400))
             SCREEN.blit(DISTANCE_TEXT, DISTANCE_RECT)
 
-            RESTART_BUTTON = Button(image=pygame.image.load("assets/Play Rect.png"), pos=(640, 500), 
-                            text_input="RESTART", font=get_font(75), base_color="#d7fcd4", hovering_color="White")
-            QUIT_BUTTON = Button(image=pygame.image.load("assets/Quit Rect.png"), pos=(640, 650), 
-                            text_input="QUIT", font=get_font(75), base_color="#d7fcd4", hovering_color="White")
+            RESTART_BUTTON = Button(image=pygame.image.load("../../assets/Play Rect.png"), pos=(640, 500), 
+                            text_input="RESTART", font=get_font_ingame(75), base_color="#d7fcd4", hovering_color="White")
+            QUIT_BUTTON = Button(image=pygame.image.load("../../assets/Quit Rect.png"), pos=(640, 650), 
+                            text_input="QUIT", font=get_font_ingame(75), base_color="#d7fcd4", hovering_color="White")
 
             for button in [RESTART_BUTTON, QUIT_BUTTON]:
                 button.changeColor(MENU_MOUSE_POS)
                 button.update(SCREEN)
                 
                
-
+            
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -498,6 +499,8 @@ class Example(Base):
                     sys.exit()
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if RESTART_BUTTON.checkForInput(MENU_MOUSE_POS):
+                            stop_music()
+                            os.chdir(self.initial_directory)  # Change back to the initial directory
                             Example(screen_size=[1280, 800]).run()
                     if QUIT_BUTTON.checkForInput(pygame.mouse.get_pos()):
                         pygame.quit()
@@ -517,13 +520,13 @@ class Example(Base):
             self.check_collision()
             self.apply_gravity()
             self.slide()
-            #Pontos/Moedas e Score
+            # Pontos/Moedas e Score
             self.check_points_hud()
             self.check_double_points()
 
             current_time = pygame.time.get_ticks()
             if current_time - self.last_update_time > self.update_interval:
-                self.points += 1
+                self.points += 2 if self.double_points else 1
                 self.last_update_time = current_time
 
             if current_time - self.last_distance_update_time > self.distance_update_interval:
@@ -567,21 +570,22 @@ class Example(Base):
         self.hud_scene.add(self.distance_label)
 
     def check_coins(self):
-        kite_pos = self.kite.get_position()
-        kite_radius = 0.75
+        player_pos = self.player.get_position()
+        player_radius = 0.75
         for obstacle in self.obstacles:
-            if isinstance(obstacle.geometry, Molduramoedas):
+            if obstacle.geometry.file_name == "../../Blender/moedas.obj":
                 obstacle_pos = obstacle.get_position()
                 obstacle_radius = 0.005
-                dx = kite_pos[0] - obstacle_pos[0]
-                dy = kite_pos[1] - obstacle_pos[1]
-                dz = kite_pos[2] - obstacle_pos[2]
-                if abs(dx) < kite_radius + obstacle_radius and abs(dy) < kite_radius + obstacle_radius and abs(dz) < kite_radius + obstacle_radius:
-                    self.scene.remove(obstacle)
-                    self.obstacles.remove(obstacle)
+                dx = player_pos[0] - obstacle_pos[0]
+                dy = player_pos[1] - obstacle_pos[1]
+                dz = player_pos[2] - obstacle_pos[2]
+                if abs(dx) < player_radius + obstacle_radius and abs(dy) < player_radius + obstacle_radius and abs(dz) < player_radius + obstacle_radius:
+                    if obstacle in self.obstacles:
+                        self.scene.remove(obstacle)
+                        self.obstacles.remove(obstacle)
                     if not self.double_points:
                         self.double_points = True
-                        self.double_points_end_time = pygame.time.get_ticks() + 10000
+                        self.double_points_end_time = pygame.time.get_ticks() + 5000
                     self.check_points_hud()
                     return 2 if self.double_points else 1
         return 0
@@ -674,18 +678,19 @@ class Example(Base):
 
     def add_obstacles(self, num_obstacles=2):
         geometries = [
-            MolduraGeometry,
-            Molduramoedas,
+            "../../Blender/cama-praia_textura3.obj",
+            "../../Blender/moedas.obj"
         ]
 
         geometry_to_texture = {
-            MolduraGeometry: "images/1.jpg",
-            Molduramoedas: "images/cor_moeda.jpg",
+            "../../Blender/cama-praia_textura3.obj": "../../images/1.jpg",
+            "../../Blender/moedas.obj": "../../images/cor_moeda.jpg",
         }
 
         for _ in range(num_obstacles):
             obstacle_geometry_class = choice(geometries)
-            obstacle_geometry = obstacle_geometry_class()
+            obstacle_geometry = Model(obstacle_geometry_class)
+            obstacle_geometry.file_name = obstacle_geometry_class  # Adicionando o atributo file_name
             texture_file = geometry_to_texture[obstacle_geometry_class]
             obstacle_material = TextureMaterial(texture=Texture(file_name=texture_file))
             obstacle_lane = choice([-1.5, 0, 1.5])
@@ -697,25 +702,28 @@ class Example(Base):
             self.obstacles.append(obstacle)
 
     def check_collision(self):
-        kite_pos = self.kite.get_position()
-        kite_radius = 0.75
+        player_pos = self.player.get_position()
+        player_radius = 0.75
         for obstacle in self.obstacles:
             obstacle_pos = obstacle.get_position()
             obstacle_radius = 0.005
-            dx = kite_pos[0] - obstacle_pos[0]
-            dy = kite_pos[1] - obstacle_pos[1]
-            dz = kite_pos[2] - obstacle_pos[2]
-            if abs(dx) < kite_radius + obstacle_radius and abs(dy) < kite_radius + obstacle_radius and abs(dz) < kite_radius + obstacle_radius:
-                if isinstance(obstacle.geometry, Molduramoedas):
+            dx = player_pos[0] - obstacle_pos[0]
+            dy = player_pos[1] - obstacle_pos[1]
+            dz = player_pos[2] - obstacle_pos[2]
+            if abs(dx) < player_radius + obstacle_radius and abs(dy) < player_radius + obstacle_radius and abs(dz) < player_radius + obstacle_radius:
+                if obstacle.geometry.file_name == "../../Blender/moedas.obj":
                     self.points += self.check_coins()
+                    # Remove the coin from the scene after collision
+                    if obstacle in self.obstacles:
+                        self.scene.remove(obstacle)
+                        self.obstacles.remove(obstacle)
                 else:
-                    print(
-                        f"Collision detected! Kite position: {kite_pos}, Obstacle position: {obstacle_pos}")
+                    print(f"Collision detected! player position: {player_pos}, Obstacle position: {obstacle_pos}")
                     self.is_game_over = True
                     break
 
     def move_to_lane(self, direction):
-        current_pos = self.kite.get_position()
+        current_pos = self.player.get_position()
         lane_width = 2
         current_lane = round(current_pos[0] / lane_width)
         target_lane = current_lane + direction
@@ -730,7 +738,7 @@ class Example(Base):
             self.slide_time += 2
             if self.slide_time >= self.slide_duration:
                 self.sliding = False
-                for x in range (0, self.slide_time, 2):
+                for x in range(0, self.slide_time, 2):
                     self.player.rotate_x(-0.1)
                 self.player.set_position([0, 2, 21])
                 
@@ -741,6 +749,7 @@ class Example(Base):
             print("SLIDING")
 
 def options():
+    play_music(main_menu_music)
     while True:
         OPTIONS_MOUSE_POS = pygame.mouse.get_pos()
         SCREEN.fill("white")
@@ -763,6 +772,7 @@ def options():
         pygame.display.update()
 
 def main_menu():
+    play_music(main_menu_music)
     while True:
         SCREEN.blit(BG, (0, 0))
         MENU_MOUSE_POS = pygame.mouse.get_pos()
@@ -788,6 +798,7 @@ def main_menu():
                 sys.exit()
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if PLAY_BUTTON.checkForInput(MENU_MOUSE_POS):
+                    stop_music()
                     Example(screen_size=[1280, 800]).run()
                 if OPTIONS_BUTTON.checkForInput(MENU_MOUSE_POS):
                     options()
