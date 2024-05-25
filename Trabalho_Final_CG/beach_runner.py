@@ -43,7 +43,7 @@ pygame.mixer.init()
 
 SCREEN_SIZE = (1280, 720)
 SCREEN = pygame.display.set_mode(SCREEN_SIZE)
-pygame.display.set_caption("Menu")
+pygame.display.set_caption("Beach Runner")
 
 BG = pygame.image.load("assets/Background.png")
 
@@ -549,7 +549,7 @@ class Example(Base):
         pygame.display.init()
         global SCREEN
         SCREEN = pygame.display.set_mode(SCREEN_SIZE)
-        pygame.display.set_caption("Menu")
+        pygame.display.set_caption("Beach Runner")
 
     def show_game_over_menu(self):
         stop_music()
