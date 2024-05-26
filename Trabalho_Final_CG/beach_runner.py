@@ -367,7 +367,62 @@ class Example(Base):
                         child.rotate_x(-math.pi/2)
                         child.set_position([-16.5, -22.5, 26])
                         self.scene.add(child)
-                
+                        
+        os.chdir(os.getcwd() + '/blender/berma2')
+
+        for filename in os.listdir():
+            if filename.endswith(".obj"):
+                if filename.find("Berma") != -1:
+                    berma_geometry = Model("berma_2.obj")
+                    berma_material = TextureMaterial(texture=Texture(file_name="../../images/sand-texture.jpg"))
+                    self.berma2 = Mesh(berma_geometry, berma_material)
+                    self.berma2.rotate_x(-math.pi/2)
+                    self.berma2.set_position([-16.5, -22.5, 0])
+                    self.berma_2_Parent._parent = self.berma2
+                    self.scene.add(self.berma2)   
+                elif filename.find("cama_almofada") != -1:
+                    cama_almofada_geometry = Model(filename)
+                    cama_almofada_material = TextureMaterial(texture=Texture(file_name="../../images/1.jpg"))
+                    self.cama_almofada = Mesh(cama_almofada_geometry, cama_almofada_material)
+                    self.berma_2_Parent.add(self.cama_almofada)
+                    #self.scene.add(self.cama_almofada)
+                elif filename.find("cama_base") != -1:
+                    cama_base_geometry = Model(filename)
+                    cama_base_material = TextureMaterial(texture=Texture(file_name="../../images/2.jpg"))
+                    self.cama_base = Mesh(cama_base_geometry, cama_base_material)
+                    self.berma_2_Parent.add(self.cama_base)
+                    #self.scene.add(self.cama_base)
+                elif filename.find("cama_cama") != -1:
+                    cama_cama_geometry = Model(filename)
+                    cama_cama_material = TextureMaterial(texture=Texture(file_name="../../images/1.jpg"))
+                    self.cama_cama = Mesh(cama_cama_geometry, cama_cama_material)
+                    self.berma_2_Parent.add(self.cama_cama)
+                    #self.scene.add(self.cama_cama)
+                elif filename.find("palm_folhas") != -1:
+                    palm_folhas_geometry = Model(filename)
+                    palm_folhas_material = TextureMaterial(texture=Texture(file_name="../../images/palm-leaf-texture.jpg"))
+                    self.palm_folhas = Mesh(palm_folhas_geometry, palm_folhas_material)
+                    self.berma_2_Parent.add(self.palm_folhas)
+                    #self.scene.add(self.palm_folhas)
+                elif filename.find("palm_trunk") != -1:
+                    palm_trunk_geometry = Model(filename)
+                    palm_trunk_material = TextureMaterial(texture=Texture(file_name="../../images/bark.png"))
+                    self.palm_trunk = Mesh(palm_trunk_geometry, palm_trunk_material)
+                    self.palm_trunk_initial_position = self.palm_trunk.get_position()
+                    self.berma_2_Parent.add(self.palm_trunk)
+                    #self.scene.add(self.palm_trunk)
+                elif filename.find("umb_base") != -1:
+                    umb_base_geometry = Model(filename)
+                    umb_base_material = TextureMaterial(texture=Texture(file_name="../../images/bark.png"))
+                    self.umb_base = Mesh(umb_base_geometry, umb_base_material)
+                    self.umb_base_initial_position = self.palm_trunk.get_position()
+                    self.berma_2_Parent.add(self.palm_trunk)
+                else:
+                    children = self.berma_2_Parent.children_list
+                    for child in children:
+                        child.rotate_x(-math.pi/2)
+                        child.set_position([-16.5, -22.5, 0])
+                        self.scene.add(child)        
 
         # Render the floor
         floor_geometry = RectangleGeometry(width=15, height=100)
@@ -411,7 +466,7 @@ class Example(Base):
         self.player_rig = MovementRig()
         self.player_geometry = Model("../player.obj")
         self.player_material = TextureMaterial(texture=Texture(
-            file_name="../../images/gradiente1.jpg"))  # Placeholder for player texture
+            file_name="../../images/cor_corpo_player.jpeg"))  # Placeholder for player texture
         self.player = Mesh(self.player_geometry, self.player_material)
         self.player.set_position([0, 2, 21])  # Initial position of the player
         self.player.scale(0.3)
