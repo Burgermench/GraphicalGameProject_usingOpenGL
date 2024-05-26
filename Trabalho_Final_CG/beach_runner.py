@@ -25,11 +25,15 @@ from geometry.moldura_tronco import Moldura_Tronco
 from geometry.rectangle import RectangleGeometry
 from geometry.moldura_moedas import Molduramoedas
 from geometry.model import Model
+from geometry.skybox_geometry import SkyboxGeometry
 
 from material.texture import TextureMaterial
 from extras.movement_rig import MovementRig
+from geometry.skybox import Skybox
 
 import os
+from OpenGL.GL import *
+from OpenGL.GLU import *
 
 from core.matrix import *
 
@@ -40,6 +44,8 @@ from core.matrix import *
 from button import Button
 
 pygame.init()
+# Configuração inicial do Pygame
+pygame.display.set_mode((800, 600), pygame.DOUBLEBUF | pygame.OPENGL)
 pygame.mixer.init()
 
 SCREEN_SIZE = (1280, 720)
@@ -52,9 +58,10 @@ BG = pygame.image.load("assets/Background.png")
 # Paths to your music files
 main_menu_music = "music/Wii Sports - Title (HQ) (320).mp3"
 game_music_1 = "music/Chemical Plant Zone Act 1 - Sonic Mania.mp3"
-record_points = "../../music/GODS-Video-Worlds-2023.mp3"
+#record_points = "../../music/GODS-Video-Worlds-2023.mp3"
 game_over_menu_music = "../../music/Super Mario Bros. Music - Game Over.mp3"
-button_hover_sound_path  = "music/Menu-hover_sound.mp3"  # Add your hover sound file here
+record_points = "../../music/celebration.mp3"
+#fireworks = "../../video/fireworks.gif"
 
 # Function to play music
 def play_music(music_file):
@@ -64,9 +71,6 @@ def play_music(music_file):
 # Function to stop music
 def stop_music():
     pygame.mixer.music.stop()
-    
-# Load the hover sound
-button_hover_sound = pygame.mixer.Sound(button_hover_sound_path)
 
 def get_font(size):  # Returns Press-Start-2P in the desired size
     return pygame.font.Font("assets/font.ttf", size)
@@ -110,8 +114,6 @@ class Button():
         self.image = pygame.transform.scale(self.image, (text_width + 50, text_height + 20))
         
         self.rect = self.image.get_rect(center=self.pos)
-        self.hovered = False  # Add a flag to track hover state
-
     
     def update(self, screen):
         if self.image is not None:
@@ -121,13 +123,8 @@ class Button():
     def changeColor(self, mouse_pos):
         if self.checkForInput(mouse_pos):
             self.text = self.font.render(self.text_input, True, self.hovering_color)
-            if not self.hovered:  # If not already hovered, play the sound
-                button_hover_sound.play()
-                self.hovered = True  # Set hovered to True
         else:
             self.text = self.font.render(self.text_input, True, self.base_color)
-            self.hovered = False  # Reset hovered to False
-
     
     def checkForInput(self, position):
         if position[0] in range(self.rect.left, self.rect.right) and position[1] in range(self.rect.top, self.rect.bottom):
@@ -196,6 +193,7 @@ class Example(Base):
         self.fps = 60
         self.frame = 0
         self.score = 0      # TODO: implement on bottom-right of screen
+        self.tempo = 0
         # HUD Scene
         self.hud_scene = Scene()
         self.hud_camera = Camera()
@@ -217,12 +215,35 @@ class Example(Base):
         self.berma_3_Parent_initpos = [-16.5, -22.5, -26]
         
         # Sky
-        sky_geometry = RectangleGeometry(width=250, height=250)
-        sky_material = TextureMaterial(texture=Texture(
-            file_name="images/sky.jpg"), property_dict={"repeatUV": [5, 5]})
-        sky = Mesh(sky_geometry, sky_material)
-        self.scene.add(sky)
+        #sky_geometry = RectangleGeometry(width=250, height=250)
+        #sky_material = TextureMaterial(texture=Texture(
+        #    file_name="images/sky.jpg"), property_dict={"repeatUV": [5, 5]})
+        #sky = Mesh(sky_geometry, sky_material)
+        #self.scene.add(sky)
         
+        skybox_geometry = SkyboxGeometry()
+        skybox_material = TextureMaterial(texture=Texture(file_name="images/front.png"))
+        skybox = Mesh(skybox_geometry, skybox_material)
+        self.scene.add(skybox)
+
+       ## Carregar texturas para cada face da SkyBox
+       #textures = [
+       #    Texture("images/front.png"),
+       #    Texture("images/back.png"),
+       #    Texture("images/top.png"),
+       #    Texture("images/bottom.png"),
+       #    Texture("images/right.png"),
+       #    Texture("images/left.png")
+       #]
+       #
+       #materials = [TextureMaterial(texture) for texture in textures]
+       #
+       #skybox_geometry = SkyboxGeometry()
+       ##self.skybox = Skybox(skybox_geometry, materials)
+       #skybox = Skybox(skybox_geometry, materials)
+       #self.scene.add(skybox.mesh)
+       ##self.scene.add(self.skybox)
+
         # Ground and Lanes
         self.lane_width: int = 1
         self.lane_count: int = 3
@@ -239,7 +260,7 @@ class Example(Base):
 
         ground_geometry = RectangleGeometry(width=ground_width, height=100)
         ground_material = TextureMaterial(texture=Texture(
-            file_name="images/grass.jpg"), property_dict={"repeatUV": [50, 50]})
+            file_name="images/sand-texture.jpg"), property_dict={"repeatUV": [50, 50]})
         self.ground = Mesh(ground_geometry, ground_material)
         self.ground.rotate_x(-math.pi/2)
         self.ground.set_position([0, -0.5, 0])
@@ -251,7 +272,7 @@ class Example(Base):
             if filename.endswith(".obj"):
                 if filename.find("Berma_1") != -1:
                     berma_geometry = Model("Berma_1.obj")
-                    berma_material = TextureMaterial(texture=Texture(file_name="../../images/sand.jpg"))
+                    berma_material = TextureMaterial(texture=Texture(file_name="../../images/sand-texture.jpg"))
                     self.berma = Mesh(berma_geometry, berma_material)
                     self.berma.rotate_x(-math.pi/2)
                     self.berma.set_position([-16.5, -22.5, 26])
@@ -330,7 +351,7 @@ class Example(Base):
         # Render the floor
         floor_geometry = RectangleGeometry(width=15, height=100)
         floor_material = TextureMaterial(
-            texture=Texture(file_name="../../images/sand.jpg"))
+            texture=Texture(file_name="../../images/sand-texture.jpg"))
         self.floor = Mesh(floor_geometry, floor_material)
         self.floor.rotate_x(-math.pi/2)
         
@@ -342,7 +363,7 @@ class Example(Base):
         # Render the floor
         floor_2_geometry = RectangleGeometry(width=15, height=100)
         floor_2_material = TextureMaterial(
-            texture=Texture(file_name="../../images/sand.jpg"))
+            texture=Texture(file_name="../../images/sand-texture.jpg"))
         self.floor_2 = Mesh(floor_2_geometry, floor_2_material)
         self.floor_2.rotate_x(-math.pi/2)
         
@@ -350,14 +371,14 @@ class Example(Base):
         self.floor_2.set_position([0, -0.4, -100])
         self.floor_2_initial_position = self.floor_2.get_position()
         # Render the sea
-        sea_geometry = RectangleGeometry(width=15, height=100)
+        sea_geometry = RectangleGeometry(width=30, height=100)
         sea_material = TextureMaterial(
             texture=Texture(file_name="../../images/sea.jpg"))
         self.sea = Mesh(sea_geometry, sea_material)
         self.sea.rotate_x(-math.pi/2)
         
         # Adjust the y-position to place the floor on top of the grass
-        self.sea.set_position([15, -0.4, 0])
+        self.sea.set_position([22.5, -0.4, 0])
         self.sea_initial_position = self.sea.get_position()
         self.scene.add(self.sea)
         self.scene.add(self.floor_2)    
@@ -376,6 +397,29 @@ class Example(Base):
         self.scene.add(self.player)
         self.player_rig.add(self.player)
 
+        #self.player_rig = MovementRig()
+
+        # Load base model and texture
+        #self.player_base_geometry = Model("../../Blender/Mew_Pokemon_base.obj")
+        #self.player_base_material = TextureMaterial(texture=Texture(file_name="../../images/cor_corpo_player.jpeg"))
+        #self.player_base = Mesh(self.player_base_geometry, self.player_base_material)
+#
+        ## Load contour model and texture
+        #self.player_contour_geometry = Model("../../Blender/Mew_Pokemon_contorno.obj")
+        #self.player_contour_material = TextureMaterial(texture=Texture(file_name="../../images/Solid_black.png"))
+        #self.player_contour = Mesh(self.player_contour_geometry, self.player_contour_material)
+#
+        ## Load eyes model and texture
+        #self.player_eyes_geometry = Model("../../Blender/Mew_Pokemon_olhos.obj")
+        #self.player_eyes_material = TextureMaterial(texture=Texture(file_name="../../images/olhos.png"))
+        #self.player_eyes = Mesh(self.player_eyes_geometry, self.player_eyes_material)
+
+
+        #self.player = Object3D()
+        #self.player.add(self.player_base)
+        #self.player.add(self.player_contour)
+        #self.player.add(self.player_eyes)
+                            
         grid_texture = Texture(file_name="../../images/bark.png")
         material = TextureMaterial(texture=grid_texture)
         grid_texture2 = Texture(file_name="../../images/palm-leaf-texture.jpg")
@@ -429,13 +473,13 @@ class Example(Base):
         self.distance_update_interval = 2000  # 2 seconds
         self.last_distance_update_time = pygame.time.get_ticks()
         
-    # Starts and loops the game until the game is over
     def run(self):
         play_music(game_music_1)
         os.chdir(self.initial_directory)
         self.initialize()
         self.keys_pressed = pygame.key.get_pressed()
         self.clock = pygame.time.Clock()
+   
         while not self.is_game_over:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -454,6 +498,7 @@ class Example(Base):
             self.show_congratulations_menu()
         else:
             self.show_game_over_menu()
+
 
     def cleanup(self):
         pygame.display.quit()
@@ -542,9 +587,9 @@ class Example(Base):
             self.save_high_score(self.high_score)
 
         # Load the video background
-        video_path = '../../video/GODS Worlds 2023 Video-Short.mp4'
-        video_player = VideoPlayer(video_path, SCREEN_SIZE)
-        
+        #video_path = '../../video/GODS Worlds 2023 Video-Short.mp4'
+        #video_path = '../../video/fireworks.gif'
+        #video_player = VideoPlayer(video_path, SCREEN_SIZE)
 
         # Setup for the congratulatory message color change
         color_index = 0
@@ -555,9 +600,10 @@ class Example(Base):
         clock = pygame.time.Clock()
 
         while True:
-            frame = video_player.get_frame()
-            if frame:
-                SCREEN.blit(pygame.transform.rotate(frame, -90), (0, 0))
+            #frame = video_player.get_frame()
+            #if frame:
+            #    SCREEN.blit(pygame.transform.rotate(frame, -90), (0, 0))
+
 
             MENU_MOUSE_POS = pygame.mouse.get_pos()
             
@@ -583,20 +629,20 @@ class Example(Base):
             for button in [RESTART_BUTTON, QUIT_BUTTON]:
                 button.changeColor(MENU_MOUSE_POS)
                 button.update(SCREEN)
-                
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    video_player.stop()
+                    #video_player.stop()
                     pygame.quit()
                     sys.exit()
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if RESTART_BUTTON.checkForInput(MENU_MOUSE_POS):
                             stop_music()
-                            video_player.stop()
+                            #video_player.stop()
                             os.chdir(self.initial_directory)  # Change back to the initial directory
                             Example(screen_size=[1280, 800]).run()
                     if QUIT_BUTTON.checkForInput(pygame.mouse.get_pos()):
-                        video_player.stop()
+                        #video_player.stop()
                         pygame.quit()
                         sys.exit()
 
@@ -618,6 +664,8 @@ class Example(Base):
             # Pontos/Moedas e Score
             self.check_points_hud()
             self.check_double_points()
+            
+            self.tempo += 1 
 
             current_time = pygame.time.get_ticks()
             if current_time - self.last_update_time > self.update_interval:
@@ -699,12 +747,12 @@ class Example(Base):
             self.rig.move_right(0.1)
         # player movement
         if keys[K_LEFT]:  # Move left
-            if not self.lane_switching:
+            if not self.lane_switching and not self.jumping and not self.sliding:
                 self.move_to_lane(-2)
                 self.lane_switching = True
                 self.switch_timer = pygame.time.get_ticks()
         if keys[K_RIGHT]:  # Move right
-            if not self.lane_switching:
+            if not self.lane_switching and not self.sliding and not self.jumping:
                 self.move_to_lane(2)
                 self.lane_switching = True
                 self.switch_timer = pygame.time.get_ticks()
@@ -787,8 +835,12 @@ class Example(Base):
         # Now handle the spawning and adding of obstacles as before
         new_obstacles = []
         for obstacle in self.obstacles:
-            # Move obstacle towards the player
-            obstacle.translate([0, 0, 0.2])
+            if obstacle.get_position()[1] == 2:
+                new_y = 1 + math.sin(self.tempo * math.pi)
+                obstacle.translate([0, new_y, 0.4])    
+            else:
+                # Move obstacle towards the player
+                obstacle.translate([0, 0, 0.2])
             # Keep obstacles within a certain range
             if obstacle.get_position()[2] < 30:
                 new_obstacles.append(obstacle)
@@ -865,7 +917,7 @@ class Example(Base):
                     obstacle_y = 0
     
                 obstacle.set_position([obstacle_x, obstacle_y, obstacle_z])
-    
+
                 self.scene.add(obstacle)
                 self.obstacles.append(obstacle)
 
