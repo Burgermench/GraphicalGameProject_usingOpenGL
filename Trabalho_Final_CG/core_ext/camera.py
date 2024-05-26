@@ -3,7 +3,6 @@ from numpy.linalg import inv
 from core.matrix import Matrix
 from core_ext.object3d import Object3D
 
-
 class Camera(Object3D):
     """  Represents the virtual camera used to view the scene """
     def __init__(self, angle_of_view=60, aspect_ratio=1, near=0.1, far=1000):
@@ -27,3 +26,11 @@ class Camera(Object3D):
 
     def set_orthographic(self, left=-1, right=1, bottom=-1, top=1, near=-1, far=1):
         self._projection_matrix = Matrix.make_ortographic(left, right, bottom, top, near, far)
+
+    def get_position(self):
+        """ Get the local position of the camera """
+        return self.local_position
+
+    def set_position(self, position):
+        """ Set the local position of the camera """
+        super().set_position(position)

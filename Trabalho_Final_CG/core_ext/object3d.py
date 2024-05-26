@@ -109,8 +109,14 @@ class Object3D:
         m = Matrix.make_scale(s)
         self.apply_matrix(m, local)
 
+    def get_position(self):
+            """ Get the local position of the object """
+            return self.local_position
+        
     def set_position(self, position):
         """ Set the local position of the object """
         self._matrix.itemset((0, 3), position[0])
         self._matrix.itemset((1, 3), position[1])
         self._matrix.itemset((2, 3), position[2])
+
+    

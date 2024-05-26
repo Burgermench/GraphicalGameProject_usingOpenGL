@@ -196,6 +196,15 @@ class Example(Base):
         
         self.high_score = self.load_high_score()
         self.initial_directory = os.getcwd()  # Initialize initial_directory here
+        
+        # Initialize variables for speed and obstacle frequency
+        self.base_speed = 0.2
+        self.obstacle_chance = 20
+        
+         # Variable to handle camera zoom on collision
+        self.collision_zoom = False
+        self.collision_zoom_time = 0
+        self.collision_zoom_duration = 5000  # 5 seconds
 
     def load_high_score(self):
         try:
@@ -287,9 +296,7 @@ class Example(Base):
         self.ground.set_position([0, -0.5, 0])
         self.scene.add(self.ground)
 
-        direc = os.getcwd()
-        os.chdir(direc + '\\Blender\\berma')
-        
+        os.chdir(os.getcwd() + '/blender/berma')
         for filename in os.listdir():
             if filename.endswith(".obj"):
                 if filename.find("Berma_1") != -1:
@@ -368,63 +375,7 @@ class Example(Base):
                         child.rotate_x(-math.pi/2)
                         child.set_position([-16.5, -22.5, 26])
                         self.scene.add(child)
-                        
-        os.chdir(direc)
-        os.chdir(direc + "\\Blender\\berma2")
-
-        for filename in os.listdir():
-            if filename.endswith(".obj"):
-                if filename.find("Berma") != -1:
-                    berma_geometry = Model("berma_2.obj")
-                    berma_material = TextureMaterial(texture=Texture(file_name="../../images/sand-texture.jpg"))
-                    self.berma2 = Mesh(berma_geometry, berma_material)
-                    self.berma2.rotate_x(-math.pi/2)
-                    self.berma2.set_position([-16.5, -22.5, 0])
-                    self.berma_2_Parent._parent = self.berma2
-                    self.scene.add(self.berma2)   
-                elif filename.find("cama_almofada") != -1:
-                    cama_almofada_geometry = Model(filename)
-                    cama_almofada_material = TextureMaterial(texture=Texture(file_name="../../images/1.jpg"))
-                    self.cama_almofada = Mesh(cama_almofada_geometry, cama_almofada_material)
-                    self.berma_2_Parent.add(self.cama_almofada)
-                    #self.scene.add(self.cama_almofada)
-                elif filename.find("cama_base") != -1:
-                    cama_base_geometry = Model(filename)
-                    cama_base_material = TextureMaterial(texture=Texture(file_name="../../images/2.jpg"))
-                    self.cama_base = Mesh(cama_base_geometry, cama_base_material)
-                    self.berma_2_Parent.add(self.cama_base)
-                    #self.scene.add(self.cama_base)
-                elif filename.find("cama_cama") != -1:
-                    cama_cama_geometry = Model(filename)
-                    cama_cama_material = TextureMaterial(texture=Texture(file_name="../../images/1.jpg"))
-                    self.cama_cama = Mesh(cama_cama_geometry, cama_cama_material)
-                    self.berma_2_Parent.add(self.cama_cama)
-                    #self.scene.add(self.cama_cama)
-                elif filename.find("palm_folhas") != -1:
-                    palm_folhas_geometry = Model(filename)
-                    palm_folhas_material = TextureMaterial(texture=Texture(file_name="../../images/palm-leaf-texture.jpg"))
-                    self.palm_folhas = Mesh(palm_folhas_geometry, palm_folhas_material)
-                    self.berma_2_Parent.add(self.palm_folhas)
-                    #self.scene.add(self.palm_folhas)
-                elif filename.find("palm_trunk") != -1:
-                    palm_trunk_geometry = Model(filename)
-                    palm_trunk_material = TextureMaterial(texture=Texture(file_name="../../images/bark.png"))
-                    self.palm_trunk = Mesh(palm_trunk_geometry, palm_trunk_material)
-                    self.palm_trunk_initial_position = self.palm_trunk.get_position()
-                    self.berma_2_Parent.add(self.palm_trunk)
-                    #self.scene.add(self.palm_trunk)
-                elif filename.find("umb_base") != -1:
-                    umb_base_geometry = Model(filename)
-                    umb_base_material = TextureMaterial(texture=Texture(file_name="../../images/bark.png"))
-                    self.umb_base = Mesh(umb_base_geometry, umb_base_material)
-                    self.umb_base_initial_position = self.palm_trunk.get_position()
-                    self.berma_2_Parent.add(self.palm_trunk)
-                else:
-                    children = self.berma_2_Parent.children_list
-                    for child in children:
-                        child.rotate_x(-math.pi/2)
-                        child.set_position([-16.5, -22.5, 0])
-                        self.scene.add(child)        
+                
 
         # Render the floor
         floor_geometry = RectangleGeometry(width=15, height=100)
@@ -468,7 +419,7 @@ class Example(Base):
         self.player_rig = MovementRig()
         self.player_geometry = Model("../player.obj")
         self.player_material = TextureMaterial(texture=Texture(
-            file_name="../../images/cor_corpo_player.jpeg"))  # Placeholder for player texture
+            file_name="../../images/gradiente1.jpg"))  # Placeholder for player texture
         self.player = Mesh(self.player_geometry, self.player_material)
         self.player.set_position([0, 2, 21])  # Initial position of the player
         self.player.scale(0.3)
@@ -571,11 +522,56 @@ class Example(Base):
                 self.hud_scene, self.hud_camera, clear_color=False)
             self.clock.tick(self.fps)
             pygame.display.flip()
+            
         self.cleanup()
         if self.points > self.high_score:
             self.show_congratulations_menu()
         else:
             self.show_game_over_menu()
+
+    def handle_collision_zoom(self, obstacle):
+        # Get initial positions
+        player_pos = self.player.get_position()
+        obstacle_pos = obstacle.get_position()
+        
+        # Calculate a new camera position that shows both player and obstacle
+        new_camera_pos = [
+            (player_pos[0] + obstacle_pos[0]) / 2,
+            (player_pos[1] + obstacle_pos[1]) / 2 + 3,  # Move the camera up a bit
+            player_pos[2] - 15  # Move the camera back
+        ]
+        
+        # Smoothly move the camera to the new position
+        start_time = pygame.time.get_ticks()
+        initial_camera_pos = self.camera.get_position()
+        move_duration = 2000  # Duration of the camera move in milliseconds
+
+        while pygame.time.get_ticks() - start_time < move_duration:
+            elapsed_time = pygame.time.get_ticks() - start_time
+            progress = elapsed_time / move_duration
+
+            self.camera.set_position([
+                initial_camera_pos[0] + (new_camera_pos[0] - initial_camera_pos[0]) * progress,
+                initial_camera_pos[1] + (new_camera_pos[1] - initial_camera_pos[1]) * progress,
+                initial_camera_pos[2] + (new_camera_pos[2] - initial_camera_pos[2]) * progress
+            ])
+            
+            self.renderer.render(self.scene, self.camera)
+            pygame.display.flip()
+            self.clock.tick(self.fps)
+        
+        # Wait for 5 seconds before moving to the corresponding menu
+        pygame.time.wait(5000)
+        
+        if self.points > self.high_score:
+            self.show_congratulations_menu()
+        else:
+            self.show_game_over_menu()
+
+
+
+
+
 
 
     def cleanup(self):
@@ -583,9 +579,10 @@ class Example(Base):
         pygame.display.init()
         global SCREEN
         SCREEN = pygame.display.set_mode(SCREEN_SIZE)
-        pygame.display.set_caption("Beach Runner")
+    pygame.display.set_caption("Beach Runner")
 
     def show_game_over_menu(self):
+        self.cleanup()  # Ensure Pygame display is reset before showing the menu
         stop_music()
         play_music(game_over_menu_music)
     
@@ -653,9 +650,10 @@ class Example(Base):
                         pygame.quit()
                         sys.exit()
 
-            pygame.display.update()
+            pygame.display.flip()
 
     def show_congratulations_menu(self):
+        self.cleanup()  # Ensure Pygame display is reset before showing the menu
         stop_music()
         play_music(record_points)
 
@@ -735,6 +733,8 @@ class Example(Base):
             self.clock.tick(self.fps)
 
         if not self.is_game_over:
+            self.adjust_speed_and_obstacle_frequency()
+
             self.move_obstacles()
             self.check_collision()
             self.apply_gravity()
@@ -759,6 +759,13 @@ class Example(Base):
                 self.lane_switching = False
         else:
             print(f"Game Over! Your score: {self.points}")
+
+
+    def adjust_speed_and_obstacle_frequency(self):
+        if self.distance % 5 == 0:
+            self.base_speed += 0.005  # Increase speed
+            self.obstacle_chance = max(5, self.obstacle_chance - 2)  # Increase obstacle frequency
+
 
     # Verifica se o player apanhou moedas e atualiza hud
     def check_points_hud(self):
@@ -895,7 +902,7 @@ class Example(Base):
     def move_floor(self):
         self.mover_scenario()
         # Move the floor towards the player using a translation vector
-        translation_vector = [0, -0.2, 0]  # Adjust the speed as needed
+        translation_vector = [0, -self.base_speed, 0]  # Adjust the speed as needed
         self.floor.translate(translation_vector)
         self.floor_2.translate(translation_vector)
     
@@ -915,10 +922,10 @@ class Example(Base):
         for obstacle in self.obstacles:
             if obstacle.get_position()[1] == 2:
                 new_y = 1 + math.sin(self.tempo * math.pi)
-                obstacle.translate([0, new_y, 0.4])    
+                obstacle.translate([0, new_y, self.base_speed])    
             else:
                 # Move obstacle towards the player
-                obstacle.translate([0, 0, 0.2])
+                obstacle.translate([0, 0, self.base_speed])
             # Keep obstacles within a certain range
             if obstacle.get_position()[2] < 30:
                 new_obstacles.append(obstacle)
@@ -928,7 +935,7 @@ class Example(Base):
         self.spawn_obstacle()
 
     def spawn_obstacle(self):
-        if len(self.obstacles) < 5 and randint(0, 20) == 0:
+        if len(self.obstacles) < 5 and randint(0, self.obstacle_chance) == 0:
             self.add_obstacles(num_obstacles=randint(1, 3))
 
     def add_obstacles(self, num_obstacles=2):
@@ -1024,6 +1031,7 @@ class Example(Base):
                 else:
                     print(f"Collision detected! player position: {player_pos}, Obstacle position: {obstacle_pos}")
                     self.is_game_over = True
+                    self.handle_collision_zoom(obstacle)
                     break
 
     def move_to_lane(self, direction):
