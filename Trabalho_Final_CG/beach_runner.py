@@ -54,7 +54,10 @@ pygame.display.set_caption("Beach Runner")
 
 BG = pygame.image.load("assets/Background.png")
 
-#musica e sons
+# Initialize volume variables
+music_volume = 0.5  # Range 0.0 to 1.0
+sfx_volume = 0.5  # Range 0.0 to 1.0
+
 # Paths to your music files
 main_menu_music = "music/Wii Sports - Title (HQ) (320).mp3"
 game_music_1 = "music/Chemical Plant Zone Act 1 - Sonic Mania.mp3"
@@ -67,6 +70,7 @@ button_hover_sound_path  = "music/Menu-hover_sound.mp3"  # Add your hover sound 
 # Function to play music
 def play_music(music_file):
     pygame.mixer.music.load(music_file)
+    pygame.mixer.music.set_volume(music_volume)
     pygame.mixer.music.play(-1)  # -1 means the music will loop indefinitely
 
 # Function to stop music
@@ -75,6 +79,11 @@ def stop_music():
     
 # Load the hover sound
 button_hover_sound = pygame.mixer.Sound(button_hover_sound_path)
+
+# Function to play sound effects
+def play_sfx(sound):
+    sound.set_volume(sfx_volume)
+    sound.play()
 
 def get_font(size):  # Returns Press-Start-2P in the desired size
     return pygame.font.Font("assets/font.ttf", size)
@@ -121,7 +130,6 @@ class Button():
         else:
             self.rect = self.text_rect  # Use the text rect if no image is provided
         
-        
         self.hovered = False  # Add a flag to track hover state
 
     def update(self, screen):
@@ -133,7 +141,7 @@ class Button():
         if self.checkForInput(mouse_pos):
             self.text = self.font.render(self.text_input, True, self.hovering_color)
             if not self.hovered:  # If not already hovered, play the sound
-                button_hover_sound.play()
+                play_sfx(button_hover_sound)
                 self.hovered = True  # Set hovered to True
         else:
             self.text = self.font.render(self.text_input, True, self.base_color)
@@ -988,6 +996,7 @@ class Example(Base):
             print("SLIDING")
 
 def options():
+    global music_volume, sfx_volume
     play_music(main_menu_music)
     while True:
         OPTIONS_MOUSE_POS = pygame.mouse.get_pos()
@@ -996,10 +1005,22 @@ def options():
         OPTIONS_RECT = OPTIONS_TEXT.get_rect(center=(640, 260))
         SCREEN.blit(OPTIONS_TEXT, OPTIONS_RECT)
 
-        OPTIONS_BACK = Button(image=None, pos=(640, 460), 
-                            text_input="BACK", font=get_font(75), base_color="Black", hovering_color="Green")
+        OPTIONS_BACK = Button(image=None, pos=(640, 660), 
+                              text_input="BACK", font=get_font(75), base_color="Black", hovering_color="Green")
         OPTIONS_BACK.changeColor(OPTIONS_MOUSE_POS)
         OPTIONS_BACK.update(SCREEN)
+
+        # Music Volume Controls
+        MUSIC_VOL_UP = Button(image=None, pos=(900, 400), text_input="MUSIC VOL +", font=get_font(45), base_color="Black", hovering_color="Green")
+        MUSIC_VOL_DOWN = Button(image=None, pos=(350, 400), text_input="MUSIC VOL -", font=get_font(45), base_color="Black", hovering_color="Green")
+        
+        # Sound Effects Volume Controls
+        SFX_VOL_UP = Button(image=None, pos=(900, 500), text_input="SFX VOL +", font=get_font(45), base_color="Black", hovering_color="Green")
+        SFX_VOL_DOWN = Button(image=None, pos=(350, 500), text_input="SFX VOL -", font=get_font(45), base_color="Black", hovering_color="Green")
+
+        for button in [OPTIONS_BACK, MUSIC_VOL_UP, MUSIC_VOL_DOWN, SFX_VOL_UP, SFX_VOL_DOWN]:
+            button.changeColor(OPTIONS_MOUSE_POS)
+            button.update(SCREEN)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -1008,6 +1029,17 @@ def options():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if OPTIONS_BACK.checkForInput(OPTIONS_MOUSE_POS):
                     main_menu()
+                if MUSIC_VOL_UP.checkForInput(OPTIONS_MOUSE_POS):
+                    music_volume = min(music_volume + 0.1, 1.0)
+                    pygame.mixer.music.set_volume(music_volume)
+                if MUSIC_VOL_DOWN.checkForInput(OPTIONS_MOUSE_POS):
+                    music_volume = max(music_volume - 0.1, 0.0)
+                    pygame.mixer.music.set_volume(music_volume)
+                if SFX_VOL_UP.checkForInput(OPTIONS_MOUSE_POS):
+                    sfx_volume = min(sfx_volume + 0.1, 1.0)
+                if SFX_VOL_DOWN.checkForInput(OPTIONS_MOUSE_POS):
+                    sfx_volume = max(sfx_volume - 0.1, 0.0)
+        
         pygame.display.update()
 
 def main_menu():
