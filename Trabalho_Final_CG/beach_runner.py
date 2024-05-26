@@ -113,11 +113,15 @@ class Button():
         self.text_rect = self.text.get_rect(center=self.pos)
         
         # Scale the image to fit the text
-        text_width = self.text_rect.width
-        text_height = self.text_rect.height
-        self.image = pygame.transform.scale(self.image, (text_width + 50, text_height + 20))
+        if self.image is not None:
+            text_width = self.text_rect.width
+            text_height = self.text_rect.height
+            self.image = pygame.transform.scale(self.image, (text_width + 50, text_height + 20))
+            self.rect = self.image.get_rect(center=self.pos)
+        else:
+            self.rect = self.text_rect  # Use the text rect if no image is provided
         
-        self.rect = self.image.get_rect(center=self.pos)
+        
         self.hovered = False  # Add a flag to track hover state
 
     def update(self, screen):
