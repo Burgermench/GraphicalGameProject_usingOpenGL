@@ -58,10 +58,11 @@ BG = pygame.image.load("assets/Background.png")
 # Paths to your music files
 main_menu_music = "music/Wii Sports - Title (HQ) (320).mp3"
 game_music_1 = "music/Chemical Plant Zone Act 1 - Sonic Mania.mp3"
-#record_points = "../../music/GODS-Video-Worlds-2023.mp3"
+record_points = "../../music/GODS-Video-Worlds-2023.mp3"
 game_over_menu_music = "../../music/Super Mario Bros. Music - Game Over.mp3"
 record_points = "../../music/celebration.mp3"
 #fireworks = "../../video/fireworks.gif"
+button_hover_sound_path  = "music/Menu-hover_sound.mp3"  # Add your hover sound file here
 
 # Function to play music
 def play_music(music_file):
@@ -71,6 +72,9 @@ def play_music(music_file):
 # Function to stop music
 def stop_music():
     pygame.mixer.music.stop()
+    
+# Load the hover sound
+button_hover_sound = pygame.mixer.Sound(button_hover_sound_path)
 
 def get_font(size):  # Returns Press-Start-2P in the desired size
     return pygame.font.Font("assets/font.ttf", size)
@@ -114,7 +118,8 @@ class Button():
         self.image = pygame.transform.scale(self.image, (text_width + 50, text_height + 20))
         
         self.rect = self.image.get_rect(center=self.pos)
-    
+        self.hovered = False  # Add a flag to track hover state
+
     def update(self, screen):
         if self.image is not None:
             screen.blit(self.image, self.rect)
@@ -123,9 +128,13 @@ class Button():
     def changeColor(self, mouse_pos):
         if self.checkForInput(mouse_pos):
             self.text = self.font.render(self.text_input, True, self.hovering_color)
+            if not self.hovered:  # If not already hovered, play the sound
+                button_hover_sound.play()
+                self.hovered = True  # Set hovered to True
         else:
             self.text = self.font.render(self.text_input, True, self.base_color)
-    
+            self.hovered = False  # Reset hovered to False
+
     def checkForInput(self, position):
         if position[0] in range(self.rect.left, self.rect.right) and position[1] in range(self.rect.top, self.rect.bottom):
             return True
@@ -588,8 +597,8 @@ class Example(Base):
 
         # Load the video background
         #video_path = '../../video/GODS Worlds 2023 Video-Short.mp4'
-        #video_path = '../../video/fireworks.gif'
-        #video_player = VideoPlayer(video_path, SCREEN_SIZE)
+        video_path = '../../video/fireworks.gif'
+        video_player = VideoPlayer(video_path, SCREEN_SIZE)
 
         # Setup for the congratulatory message color change
         color_index = 0
@@ -600,9 +609,9 @@ class Example(Base):
         clock = pygame.time.Clock()
 
         while True:
-            #frame = video_player.get_frame()
-            #if frame:
-            #    SCREEN.blit(pygame.transform.rotate(frame, -90), (0, 0))
+            frame = video_player.get_frame()
+            if frame:
+                SCREEN.blit(pygame.transform.rotate(frame, -90), (0, 0))
 
 
             MENU_MOUSE_POS = pygame.mouse.get_pos()
@@ -632,17 +641,17 @@ class Example(Base):
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    #video_player.stop()
+                    video_player.stop()
                     pygame.quit()
                     sys.exit()
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if RESTART_BUTTON.checkForInput(MENU_MOUSE_POS):
                             stop_music()
-                            #video_player.stop()
+                            video_player.stop()
                             os.chdir(self.initial_directory)  # Change back to the initial directory
                             Example(screen_size=[1280, 800]).run()
                     if QUIT_BUTTON.checkForInput(pygame.mouse.get_pos()):
-                        #video_player.stop()
+                        video_player.stop()
                         pygame.quit()
                         sys.exit()
 
