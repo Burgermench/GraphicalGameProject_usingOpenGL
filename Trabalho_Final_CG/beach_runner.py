@@ -287,8 +287,9 @@ class Example(Base):
         self.ground.set_position([0, -0.5, 0])
         self.scene.add(self.ground)
 
-        os.chdir(os.getcwd() + '/blender/berma')
-
+        direc = os.getcwd()
+        os.chdir(direc + '\\Blender\\berma')
+        
         for filename in os.listdir():
             if filename.endswith(".obj"):
                 if filename.find("Berma_1") != -1:
@@ -368,7 +369,8 @@ class Example(Base):
                         child.set_position([-16.5, -22.5, 26])
                         self.scene.add(child)
                         
-        os.chdir(os.getcwd() + '/blender/berma2')
+        os.chdir(direc)
+        os.chdir(direc + "\\Blender\\berma2")
 
         for filename in os.listdir():
             if filename.endswith(".obj"):
