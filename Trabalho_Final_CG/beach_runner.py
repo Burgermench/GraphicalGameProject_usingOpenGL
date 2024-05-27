@@ -381,6 +381,12 @@ class Example(Base):
                     berma_geometry = Model("Berma_1.obj")
                     berma_material = TextureMaterial(texture=Texture(file_name="../../images/sand-texture.jpg"))
                     
+                    self.berma2 = Mesh(berma_geometry, berma_material)
+                    self.berma2.rotate_x(-math.pi/2)
+                    self.berma2.set_position([-16.5, -22.5, -26])
+                    self.berma_2_Parent._parent = self.berma2
+                    self.scene.add(self.berma2)
+                    
                     self.berma3 = Mesh(berma_geometry, berma_material)
                     self.berma3.rotate_x(-math.pi/2)
                     self.berma3.set_position([-16.5, -22.5, -26])
@@ -912,8 +918,8 @@ class Example(Base):
     def mover_scenario(self):
         parent1 = self.berma_Parent.parent
         parent1.translate([0, -0.2, 0])
-        #parent2 = self.berma_2_Parent.parent
-        #parent2.translate([0, -0.2, 0])
+        parent2 = self.berma_2_Parent.parent
+        parent2.translate([0, -0.2, 0])
         parent3 = self.berma_3_Parent.parent
         parent3.translate([0, -0.2, 0])
         
