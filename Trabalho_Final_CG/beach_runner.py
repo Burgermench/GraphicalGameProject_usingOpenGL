@@ -50,7 +50,7 @@ SCREEN_SIZE = (1280, 720)
 SCREEN = pygame.display.set_mode(SCREEN_SIZE)
 pygame.display.set_caption("Beach Runner")
 
-BG = pygame.image.load("assets/Background.png")
+BG = pygame.image.load("assets/praia.jpg")
 
 # Initialize volume variables
 music_volume = 0.5  # Range 0.0 to 1.0
@@ -1119,7 +1119,7 @@ def options():
 
         OPTIONS_BACK = Button(image=None, pos=(640, 660), 
                               text_input="BACK", font=get_font(75), base_color="Black", hovering_color="Green")
-        HOW_TO_PLAY_BUTTON = Button(image=None, pos=(640, 550), 
+        HOW_TO_PLAY_BUTTON = Button(image=None, pos=(640, 570), 
                                     text_input="HOW TO PLAY", font=get_font(45), base_color="Black", hovering_color="Green")
 
         OPTIONS_BACK.changeColor(OPTIONS_MOUSE_POS)
@@ -1182,7 +1182,6 @@ def how_to_play():
             "Collect coins to increase your score.",
             "Avoid obstacles to stay in the game.",
             "",
-            "Press ESC to pause or resume the game."
         ]
         
         for i, line in enumerate(instructions):
