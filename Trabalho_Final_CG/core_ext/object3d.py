@@ -118,5 +118,3 @@ class Object3D:
         self._matrix.itemset((0, 3), position[0])
         self._matrix.itemset((1, 3), position[1])
         self._matrix.itemset((2, 3), position[2])
-
-    

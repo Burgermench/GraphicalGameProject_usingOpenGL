@@ -66,6 +66,7 @@ game_over_menu_music = "../../music/Super Mario Bros. Music - Game Over.mp3"
 record_points = "../../music/celebration.mp3"
 #fireworks = "../../video/fireworks.gif"
 button_hover_sound_path  = "music/Menu-hover_sound.mp3"  # Add your hover sound file here
+losing_sound = "../../music/The Price is Right Losing Horn.mp3"
 
 # Function to play music
 def play_music(music_file):
@@ -491,6 +492,7 @@ class Example(Base):
         self.player.scale(2.0)
         self.scene.add(self.player)
         self.player_rig.add(self.player)
+        self.player_radius = 1 # Raio inicial do jogador
                             
         grid_texture = Texture(file_name="../../images/bark.png")
         material = TextureMaterial(texture=grid_texture)
@@ -573,6 +575,8 @@ class Example(Base):
             self.show_game_over_menu()
 
     def handle_collision_zoom(self, obstacle):
+        stop_music()
+        play_music(losing_sound)
         # Get initial positions
         player_pos = self.player.get_position()
         obstacle_pos = obstacle.get_position()
@@ -604,18 +608,12 @@ class Example(Base):
             self.clock.tick(self.fps)
         
         # Wait for 5 seconds before moving to the corresponding menu
-        pygame.time.wait(5000)
+        pygame.time.wait(3000)
         
         if self.points > self.high_score:
             self.show_congratulations_menu()
         else:
             self.show_game_over_menu()
-
-
-
-
-
-
 
     def cleanup(self):
         pygame.display.quit()
@@ -842,7 +840,7 @@ class Example(Base):
 
     def check_coins(self):
         player_pos = self.player.get_position()
-        player_radius = 0.75
+        self.player_radius = 0.75
         for obstacle in self.obstacles:
             if obstacle.geometry.file_name == "../../Blender/moedas.obj":
                 obstacle_pos = obstacle.get_position()
@@ -850,7 +848,7 @@ class Example(Base):
                 dx = player_pos[0] - obstacle_pos[0]
                 dy = player_pos[1] - obstacle_pos[1]
                 dz = player_pos[2] - obstacle_pos[2]
-                if abs(dx) < player_radius + obstacle_radius and abs(dy) < player_radius + obstacle_radius and abs(dz) < player_radius + obstacle_radius:
+                if abs(dx) < self.player_radius + obstacle_radius and abs(dy) < self.player_radius + obstacle_radius and abs(dz) < self.player_radius + obstacle_radius:
                     if obstacle in self.obstacles:
                         self.scene.remove(obstacle)
                         self.obstacles.remove(obstacle)
@@ -1038,39 +1036,38 @@ class Example(Base):
                 obstacle_z = randint(-30, -10)
     
                 if obstacle_geometry_class == "../../Blender/kitev3.obj":
-                    obstacle_y = 2
+                    # Kite tem duas posições possíveis
+                    if choice([True, False]):
+                        # Posição alta que impede salto
+                        obstacle_y = 2
+                    else:
+                        # Posição baixa que requer deslize
+                        obstacle_y = 0.8
                 elif obstacle_geometry_class == "../../Blender/oculos.obj":
                     obstacle_y = -0.5
                 else:
                     obstacle_y = 0
     
                 obstacle.set_position([obstacle_x, obstacle_y, obstacle_z])
-
+    
                 self.scene.add(obstacle)
                 self.obstacles.append(obstacle)
-
+    
     def check_collision(self):
         player_pos = self.player.get_position()
-        player_radius = 0.75
         for obstacle in self.obstacles:
             obstacle_pos = obstacle.get_position()
             obstacle_radius = 0.005
             dx = player_pos[0] - obstacle_pos[0]
             dy = player_pos[1] - obstacle_pos[1]
             dz = player_pos[2] - obstacle_pos[2]
-            if abs(dx) < player_radius + obstacle_radius and abs(dy) < player_radius + obstacle_radius and abs(dz) < player_radius + obstacle_radius:
+            if abs(dx) < self.player_radius + obstacle_radius and abs(dy) < self.player_radius + obstacle_radius and abs(dz) < self.player_radius + obstacle_radius:
                 if obstacle.geometry.file_name == "../../Blender/moedas.obj":
                     self.points += self.check_coins()
                     print("MOEDA")
                     if obstacle in self.obstacles:
                         self.scene.remove(obstacle)
                         self.obstacles.remove(obstacle)
-                #elif obstacle.geometry.file_name == "../../Blender/oculos.obj":
-                #    print("Power-up collected! All obstacles removed.")
-                #    # Remove all obstacles from the scene
-                #    if obstacle in self.obstacles:
-                #        self.scene.remove(obstacle)
-                #        self.obstacles.remove(obstacle)
                 else:
                     print(f"Collision detected! player position: {player_pos}, Obstacle position: {obstacle_pos}")
                     self.is_game_over = True
@@ -1091,17 +1088,24 @@ class Example(Base):
         if self.sliding:
             current_pos = self.player.get_position()
             self.slide_time += 2
+
+            # Reduz o raio do jogador durante o deslize
+            self.player_radius = 0.325  # Metade do raio original
+
             if self.slide_time >= self.slide_duration:
                 self.sliding = False
+                self.player_radius = 1  # Restaura o raio original
+
                 for x in range(0, self.slide_time, 2):
                     self.player.rotate_x(-0.1)
                 self.player.set_position([0, 2, 21])
-                
+
             # Ensure player doesn't go beneath the ground
             new_y = max(0, current_pos[1] - self.gravity)
             self.player.set_position([current_pos[0], new_y, current_pos[2]])
             self.player.rotate_x(0.1)
             print("SLIDING")
+
 
 def options():
     global music_volume, sfx_volume
