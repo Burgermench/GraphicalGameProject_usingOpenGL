@@ -50,7 +50,7 @@ SCREEN_SIZE = (1280, 720)
 SCREEN = pygame.display.set_mode(SCREEN_SIZE)
 pygame.display.set_caption("Beach Runner")
 
-BG = pygame.image.load("assets/Background.png")
+BG = pygame.image.load("images/BeachRunner2.jpeg")
 
 # Initialize volume variables
 music_volume = 0.5  # Range 0.0 to 1.0
@@ -62,8 +62,10 @@ game_music_1 = "music/Chemical Plant Zone Act 1 - Sonic Mania.mp3"
 record_points = "../../music/GODS-Video-Worlds-2023.mp3"
 game_over_menu_music = "../../music/Super Mario Bros. Music - Game Over.mp3"
 record_points = "../../music/celebration.mp3"
-button_hover_sound_path  = "music/Menu-hover_sound.mp3"  # Add your hover sound file here
+button_hover_sound_path  = "music/Menu-hover_sound.mp3" 
 losing_sound = "../../music/The Price is Right Losing Horn.mp3"
+elevator_music = "../../music/Elevator Music.mp3"
+
 
 # Function to play music
 def play_music(music_file):
@@ -202,7 +204,12 @@ class Example(Base):
         self.collision_zoom = False
         self.collision_zoom_time = 0
         self.collision_zoom_duration = 5000  # 5 seconds
-
+        
+        self.is_game_paused = False
+        
+        # Add this line to set the initial directory
+        self.initial_directory = os.getcwd()
+        
     def load_high_score(self):
         try:
             with open(self.high_score_file, "r") as file:
@@ -562,14 +569,28 @@ class Example(Base):
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     sys.exit()
-            self.keys_pressed = pygame.key.get_pressed()
-            self.handle_input(self.keys_pressed)
-            self.update()
-            self.renderer.render(self.scene, self.camera)
-            self.renderer.render(
-                self.hud_scene, self.hud_camera, clear_color=False)
-            self.clock.tick(self.fps)
-            pygame.display.flip()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        self.is_game_paused = not self.is_game_paused
+
+                if self.is_game_paused:
+                    self.show_pause_menu()
+                    # Reinitialize OpenGL context when resuming
+                    pygame.display.quit()
+                    pygame.display.init()
+                    SCREEN = pygame.display.set_mode(SCREEN_SIZE, pygame.DOUBLEBUF | pygame.OPENGL)
+                    self.renderer = Renderer()
+                else:
+                    self.keys_pressed = pygame.key.get_pressed()
+                    self.handle_input(self.keys_pressed)
+                    self.update()
+                    self.renderer.render(self.scene, self.camera)
+                    self.renderer.render(
+                        self.hud_scene, self.hud_camera, clear_color=False)
+                    self.clock.tick(self.fps)
+                    pygame.display.flip()
+
+
             
         self.cleanup()
         if self.points > self.high_score:
@@ -1105,7 +1126,66 @@ class Example(Base):
             new_y = max(0, current_pos[1] - self.gravity)
             self.player.set_position([current_pos[0], new_y, current_pos[2]])
             self.player.rotate_x(0.1)
-            print("SLIDING")
+            
+    def show_pause_menu(self):
+        self.cleanup()  # Ensure Pygame display is reset before showing the menu
+        play_music(elevator_music)
+        while self.is_game_paused:
+            MENU_MOUSE_POS = pygame.mouse.get_pos()
+            SCREEN.fill("black")
+            
+            PAUSE_TEXT = get_title_font_ingame(100).render("PAUSED", True, "White")
+            PAUSE_RECT = PAUSE_TEXT.get_rect(center=(SCREEN_SIZE[0] // 2, SCREEN_SIZE[1] // 4))
+            SCREEN.blit(PAUSE_TEXT, PAUSE_RECT)
+
+
+            MAIN_MENU_BUTTON = Button(
+                image=pygame.image.load("../../assets/Options Rect.png"),
+                pos=(SCREEN_SIZE[0] // 2, SCREEN_SIZE[1] // 2),
+                text_input="MAIN MENU",
+                font=get_font_ingame(75),
+                base_color="#d7fcd4",
+                hovering_color="Blue"
+            )
+            RESTART_BUTTON = Button(image=pygame.image.load("../../assets/Play Rect.png"), pos=(SCREEN_SIZE[0] // 2, SCREEN_SIZE[1] // 2 + 100), 
+                            text_input="RESTART",font=get_font_ingame(75), base_color="#d7fcd4", hovering_color="Blue")
+            QUIT_BUTTON = Button(
+                image=pygame.image.load("../../assets/Quit Rect.png"),
+                pos=(SCREEN_SIZE[0] // 2, SCREEN_SIZE[1] // 2 + 200),
+                text_input="QUIT",
+                font=get_font_ingame(75),
+                base_color="#d7fcd4",
+                hovering_color="Blue"
+            )
+
+            for button in [MAIN_MENU_BUTTON, RESTART_BUTTON,  QUIT_BUTTON]:
+                button.changeColor(MENU_MOUSE_POS)
+                button.update(SCREEN)
+                
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if MAIN_MENU_BUTTON.checkForInput(MENU_MOUSE_POS):
+                        self.is_game_paused = False
+                        os.chdir(self.initial_directory)  # Change back to the initial directory
+                        main_menu()
+                    if RESTART_BUTTON.checkForInput(MENU_MOUSE_POS):
+                            stop_music()
+                            os.chdir(self.initial_directory)  # Change back to the initial directory
+                            Example(screen_size=[1280, 800]).run()
+                    if QUIT_BUTTON.checkForInput(pygame.mouse.get_pos()):
+                        pygame.quit()
+                        sys.exit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        self.is_game_paused = False
+                        os.chdir(self.initial_directory)  # Change back to the initial directory
+                        Example(screen_size=[1280, 800]).run()
+
+            pygame.display.flip()
+
 
 def options():
     global music_volume, sfx_volume
