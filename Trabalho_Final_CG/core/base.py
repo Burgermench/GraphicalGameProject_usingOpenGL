@@ -34,7 +34,7 @@ class Base:
 
     @property
     def delta_time(self):
-        return self._delta_time
+        return self._time
 
     @property
     def input(self):

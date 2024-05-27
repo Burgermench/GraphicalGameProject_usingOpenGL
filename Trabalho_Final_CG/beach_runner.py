@@ -27,6 +27,7 @@ from geometry.moldura_moedas import Molduramoedas
 from geometry.model import Model
 from geometry.skybox_geometry import SkyboxGeometry
 
+from material.material import Material
 from material.texture import TextureMaterial
 from extras.movement_rig import MovementRig
 from geometry.skybox import Skybox
@@ -39,12 +40,9 @@ from core.matrix import *
 
 # Implementation of "Beach Runner" game
 
-# SE QUISEREM CORRE O JOGO SEM O MENU VÃO ATÉ O FIM DO FICHEIRO
-
 from button import Button
 
 pygame.init()
-# Configuração inicial do Pygame
 pygame.display.set_mode((800, 600), pygame.DOUBLEBUF | pygame.OPENGL)
 pygame.mixer.init()
 
@@ -64,7 +62,6 @@ game_music_1 = "music/Chemical Plant Zone Act 1 - Sonic Mania.mp3"
 record_points = "../../music/GODS-Video-Worlds-2023.mp3"
 game_over_menu_music = "../../music/Super Mario Bros. Music - Game Over.mp3"
 record_points = "../../music/celebration.mp3"
-#fireworks = "../../video/fireworks.gif"
 button_hover_sound_path  = "music/Menu-hover_sound.mp3"  # Add your hover sound file here
 losing_sound = "../../music/The Price is Right Losing Horn.mp3"
 
@@ -98,7 +95,6 @@ def get_font_ingame(size):  # Returns Press-Start-2P in the desired size
 def get_title_font_ingame(size):  # Returns Press-Start-2P in the desired size
     return pygame.font.Font("../../assets/Jersey20-Regular.ttf", size)
 
-
 def create_text(font, size, transparent, width=200, height=80, color=[0, 0, 200], position=[0, 600], text: str = 'Sem texto'):
     geometry = RectangleGeometry(
         width=width, height=height, position=position, alignment=[0, 1])
@@ -109,8 +105,6 @@ def create_text(font, size, transparent, width=200, height=80, color=[0, 0, 200]
     material = TextureMaterial(message)
     mesh = Mesh(geometry, material)
     return mesh
-
-
 
 class Button():
     def __init__(self, image, pos, text_input, font, base_color, hovering_color):
@@ -248,34 +242,10 @@ class Example(Base):
         self.berma_3_Parent_initpos = [-16.5, -22.5, -26]
         
         # Sky
-        #sky_geometry = RectangleGeometry(width=250, height=250)
-        #sky_material = TextureMaterial(texture=Texture(
-        #    file_name="images/sky.jpg"), property_dict={"repeatUV": [5, 5]})
-        #sky = Mesh(sky_geometry, sky_material)
-        #self.scene.add(sky)
-        
         skybox_geometry = SkyboxGeometry()
         skybox_material = TextureMaterial(texture=Texture(file_name="images/front.png"))
         skybox = Mesh(skybox_geometry, skybox_material)
         self.scene.add(skybox)
-
-       ## Carregar texturas para cada face da SkyBox
-       #textures = [
-       #    Texture("images/front.png"),
-       #    Texture("images/back.png"),
-       #    Texture("images/top.png"),
-       #    Texture("images/bottom.png"),
-       #    Texture("images/right.png"),
-       #    Texture("images/left.png")
-       #]
-       #
-       #materials = [TextureMaterial(texture) for texture in textures]
-       #
-       #skybox_geometry = SkyboxGeometry()
-       ##self.skybox = Skybox(skybox_geometry, materials)
-       #skybox = Skybox(skybox_geometry, materials)
-       #self.scene.add(skybox.mesh)
-       ##self.scene.add(self.skybox)
 
         # Ground and Lanes
         self.lane_width: int = 1
@@ -328,57 +298,48 @@ class Example(Base):
                     cama_almofada_material = TextureMaterial(texture=Texture(file_name="../../images/1.jpg"))
                     self.cama_almofada = Mesh(cama_almofada_geometry, cama_almofada_material)
                     self.berma_Parent.add(self.cama_almofada)
-                    #self.scene.add(self.cama_almofada)
                 elif filename.find("cama_base") != -1:
                     cama_base_geometry = Model(filename)
                     cama_base_material = TextureMaterial(texture=Texture(file_name="../../images/2.jpg"))
                     self.cama_base = Mesh(cama_base_geometry, cama_base_material)
                     self.berma_Parent.add(self.cama_base)
-                    #self.scene.add(self.cama_base)
                 elif filename.find("cama_cama") != -1:
                     cama_cama_geometry = Model(filename)
                     cama_cama_material = TextureMaterial(texture=Texture(file_name="../../images/1.jpg"))
                     self.cama_cama = Mesh(cama_cama_geometry, cama_cama_material)
                     self.berma_Parent.add(self.cama_cama)
-                    #self.scene.add(self.cama_cama)
                 elif filename.find("palm_folhas") != -1:
                     palm_folhas_geometry = Model(filename)
                     palm_folhas_material = TextureMaterial(texture=Texture(file_name="../../images/palm-leaf-texture.jpg"))
                     self.palm_folhas = Mesh(palm_folhas_geometry, palm_folhas_material)
                     self.berma_Parent.add(self.palm_folhas)
-                    #self.scene.add(self.palm_folhas)
                 elif filename.find("palm_trunk") != -1:
                     palm_trunk_geometry = Model(filename)
                     palm_trunk_material = TextureMaterial(texture=Texture(file_name="../../images/bark.png"))
                     self.palm_trunk = Mesh(palm_trunk_geometry, palm_trunk_material)
                     self.palm_trunk_initial_position = self.palm_trunk.get_position()
                     self.berma_Parent.add(self.palm_trunk)
-                    #self.scene.add(self.palm_trunk)
                 elif filename.find("RED") != -1:
                     red_geometry = Model(filename)
                     red_material = TextureMaterial(texture=Texture(file_name="../../images/gradiente1.jpg"))
                     self.red = Mesh(red_geometry, red_material)
                     self.berma_Parent.add(self.red)
-                    #self.scene.add(self.red)
                 elif filename.find("TOP") != -1:
                     top_geometry = Model(filename)
                     top_material = TextureMaterial(texture=Texture(file_name="../../images/gradiente1.jpg"))
                     self.top = Mesh(top_geometry, top_material)
                     self.berma_Parent.add(self.top)
-                    #self.scene.add(self.top)
                 elif filename.find("WHITE_001") != -1:
                     white_geometry = Model(filename)
                     white_material = TextureMaterial(texture=Texture(file_name="../../images/grass.jpg"))
                     self.white = Mesh(white_geometry, white_material)
                     self.berma_Parent.add(self.white)
-                    #self.scene.add(self.white)
                 else:
                     children = self.berma_Parent.children_list
                     for child in children:
                         child.rotate_x(-math.pi/2)
                         child.set_position([-16.5, -22.5, 26])
                         self.scene.add(child)
-                
 
         # Render the floor
         floor_geometry = RectangleGeometry(width=15, height=100)
@@ -402,21 +363,57 @@ class Example(Base):
         # Adjust the y-position to place the floor on top of the grass
         self.floor_2.set_position([0, -0.4, -100])
         self.floor_2_initial_position = self.floor_2.get_position()
-        # Render the sea
-        sea_geometry = RectangleGeometry(width=30, height=100)
-        sea_material = TextureMaterial(
-            texture=Texture(file_name="../../images/sea.jpg"))
-        self.sea = Mesh(sea_geometry, sea_material)
+        
+        # Render the sea with wave effect
+        sea_geometry = RectangleGeometry(width=40, height=100)
+        vertex_shader_code = """
+            uniform mat4 projectionMatrix;
+            uniform mat4 viewMatrix;
+            uniform mat4 modelMatrix;
+            uniform float tileU;  // Uniform for horizontal tiling
+            uniform float tileV;  // Uniform for vertical tiling
+            in vec3 vertexPosition;
+            in vec2 vertexUV;
+            out vec2 UV;
+
+            void main()
+            {
+                gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(vertexPosition, 1.0);
+                UV = vertexUV * vec2(tileU, tileV);  // Apply tiling
+            }
+
+        """
+        fragment_shader_code = """
+             uniform sampler2D texture;
+            in vec2 UV;
+            uniform float time;
+            out vec4 fragColor;
+
+            void main()
+            {
+                vec2 shiftUV = UV + vec2(0, 0.2 * sin(6.0 * UV.x + time));  // Rippling effect
+                fragColor = texture2D(texture, shiftUV);
+            }
+        """
+
+        sea_texture = Texture(file_name="../../images/sea3.jpg")
+        self.wave_material = Material(vertex_shader_code, fragment_shader_code)
+        self.wave_material.add_uniform("sampler2D", "texture", [sea_texture.texture_ref, 1])
+        self.wave_material.add_uniform("float", "time", 0.0)
+        self.wave_material.add_uniform("float", "tileU", 6.0)  # Example tiling value for horizontal direction
+        self.wave_material.add_uniform("float", "tileV", 6.0)  # Example tiling value for vertical direction
+        self.wave_material.locate_uniforms()
+
+        self.sea = Mesh(sea_geometry, self.wave_material)
         self.sea.rotate_x(-math.pi/2)
         
         # Adjust the y-position to place the floor on top of the grass
-        self.sea.set_position([22.5, -0.4, 0])
+        self.sea.set_position([27.5, -0.4, 0])
         self.sea_initial_position = self.sea.get_position()
         self.scene.add(self.sea)
         self.scene.add(self.floor_2)    
     
         # ALL THINGS RELATED TO PLAYER
-        
         
         # Render the player
         self.player_rig = MovementRig()
@@ -640,7 +637,6 @@ class Example(Base):
             self.save_high_score(self.high_score)
 
         # Load the video background
-        #video_path = '../../video/GODS Worlds 2023 Video-Short.mp4'
         video_path = '../../video/fireworks.gif'
         video_player = VideoPlayer(video_path, SCREEN_SIZE)
 
@@ -656,7 +652,6 @@ class Example(Base):
             frame = video_player.get_frame()
             if frame:
                 SCREEN.blit(pygame.transform.rotate(frame, -90), (0, 0))
-
 
             MENU_MOUSE_POS = pygame.mouse.get_pos()
             
@@ -700,7 +695,6 @@ class Example(Base):
                         sys.exit()
 
             pygame.display.update()
-            
 
     # Updates the game state
     def update(self):
@@ -737,12 +731,13 @@ class Example(Base):
         else:
             print(f"Game Over! Your score: {self.points}")
 
+        # Update wave effect on the sea
+        self.wave_material.uniform_dict["time"].data += 0.1
 
     def adjust_speed_and_obstacle_frequency(self):
         if self.distance % 5 == 0:
             self.base_speed += 0.005  # Increase speed
             self.obstacle_chance = max(5, self.obstacle_chance - 2)  # Increase obstacle frequency
-
 
     # Verifica se o player apanhou moedas e atualiza hud
     def check_points_hud(self):
@@ -874,7 +869,6 @@ class Example(Base):
              for child in self.berma_3_Parent.children_list:
                 child.set_position(self.berma_3_Parent_initpos)
             
-        
     
     def move_floor(self):
         self.mover_scenario()
@@ -890,6 +884,7 @@ class Example(Base):
             self.floor.set_position(self.floor_2_initial_position)
         if floor_2_pos[2] >= 100:
             self.floor_2.set_position(self.floor_2_initial_position)
+        
 
     def move_obstacles(self):
         # Move the floor instead of obstacles
@@ -1042,7 +1037,6 @@ class Example(Base):
             self.player.rotate_x(0.1)
             print("SLIDING")
 
-
 def options():
     global music_volume, sfx_volume
     play_music(main_menu_music)
@@ -1172,7 +1166,7 @@ def main_menu():
                     Example(screen_size=[1280, 800]).run()
                 if OPTIONS_BUTTON.checkForInput(MENU_MOUSE_POS):
                     options()
-                if QUIT_BUTTON.checkForInput(MENU_MOUSE_POS):
+                if QUIT_BUTTON.checkForInput(pygame.mouse.get_pos()):
                     pygame.quit()
                     sys.exit()
         pygame.display.update()
