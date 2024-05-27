@@ -97,6 +97,7 @@ def get_font_ingame(size):  # Returns Press-Start-2P in the desired size
 def get_title_font_ingame(size):  # Returns Press-Start-2P in the desired size
     return pygame.font.Font("../../assets/Jersey20-Regular.ttf", size)
 
+
 def create_text(font, size, transparent, width=200, height=80, color=[0, 0, 200], position=[0, 600], text: str = 'Sem texto'):
     geometry = RectangleGeometry(
         width=width, height=height, position=position, alignment=[0, 1])
@@ -107,6 +108,7 @@ def create_text(font, size, transparent, width=200, height=80, color=[0, 0, 200]
     material = TextureMaterial(message)
     mesh = Mesh(geometry, material)
     return mesh
+
 
 
 class Button():
@@ -417,37 +419,14 @@ class Example(Base):
         
         # Render the player
         self.player_rig = MovementRig()
-        self.player_geometry = Model("../player.obj")
+        self.player_geometry = Model("../boneco.obj")
         self.player_material = TextureMaterial(texture=Texture(
             file_name="../../images/gradiente1.jpg"))  # Placeholder for player texture
         self.player = Mesh(self.player_geometry, self.player_material)
         self.player.set_position([0, 2, 21])  # Initial position of the player
-        self.player.scale(0.3)
+        self.player.scale(2.0)
         self.scene.add(self.player)
         self.player_rig.add(self.player)
-
-        #self.player_rig = MovementRig()
-
-        # Load base model and texture
-        #self.player_base_geometry = Model("../../Blender/Mew_Pokemon_base.obj")
-        #self.player_base_material = TextureMaterial(texture=Texture(file_name="../../images/cor_corpo_player.jpeg"))
-        #self.player_base = Mesh(self.player_base_geometry, self.player_base_material)
-#
-        ## Load contour model and texture
-        #self.player_contour_geometry = Model("../../Blender/Mew_Pokemon_contorno.obj")
-        #self.player_contour_material = TextureMaterial(texture=Texture(file_name="../../images/Solid_black.png"))
-        #self.player_contour = Mesh(self.player_contour_geometry, self.player_contour_material)
-#
-        ## Load eyes model and texture
-        #self.player_eyes_geometry = Model("../../Blender/Mew_Pokemon_olhos.obj")
-        #self.player_eyes_material = TextureMaterial(texture=Texture(file_name="../../images/olhos.png"))
-        #self.player_eyes = Mesh(self.player_eyes_geometry, self.player_eyes_material)
-
-
-        #self.player = Object3D()
-        #self.player.add(self.player_base)
-        #self.player.add(self.player_contour)
-        #self.player.add(self.player_eyes)
                             
         grid_texture = Texture(file_name="../../images/bark.png")
         material = TextureMaterial(texture=grid_texture)
@@ -1072,9 +1051,14 @@ def options():
 
         OPTIONS_BACK = Button(image=None, pos=(640, 660), 
                               text_input="BACK", font=get_font(75), base_color="Black", hovering_color="Green")
+        HOW_TO_PLAY_BUTTON = Button(image=None, pos=(640, 550), 
+                                    text_input="HOW TO PLAY", font=get_font(45), base_color="Black", hovering_color="Green")
+
         OPTIONS_BACK.changeColor(OPTIONS_MOUSE_POS)
         OPTIONS_BACK.update(SCREEN)
-
+        HOW_TO_PLAY_BUTTON.changeColor(OPTIONS_MOUSE_POS)
+        HOW_TO_PLAY_BUTTON.update(SCREEN)
+        
         # Music Volume Controls
         MUSIC_VOL_UP = Button(image=None, pos=(900, 400), text_input="MUSIC VOL +", font=get_font(45), base_color="Black", hovering_color="Green")
         MUSIC_VOL_DOWN = Button(image=None, pos=(350, 400), text_input="MUSIC VOL -", font=get_font(45), base_color="Black", hovering_color="Green")
@@ -1083,7 +1067,7 @@ def options():
         SFX_VOL_UP = Button(image=None, pos=(900, 500), text_input="SFX VOL +", font=get_font(45), base_color="Black", hovering_color="Green")
         SFX_VOL_DOWN = Button(image=None, pos=(350, 500), text_input="SFX VOL -", font=get_font(45), base_color="Black", hovering_color="Green")
 
-        for button in [OPTIONS_BACK, MUSIC_VOL_UP, MUSIC_VOL_DOWN, SFX_VOL_UP, SFX_VOL_DOWN]:
+        for button in [OPTIONS_BACK,HOW_TO_PLAY_BUTTON, MUSIC_VOL_UP, MUSIC_VOL_DOWN, SFX_VOL_UP, SFX_VOL_DOWN]:
             button.changeColor(OPTIONS_MOUSE_POS)
             button.update(SCREEN)
 
@@ -1094,6 +1078,8 @@ def options():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if OPTIONS_BACK.checkForInput(OPTIONS_MOUSE_POS):
                     main_menu()
+                if HOW_TO_PLAY_BUTTON.checkForInput(OPTIONS_MOUSE_POS):
+                    how_to_play()
                 if MUSIC_VOL_UP.checkForInput(OPTIONS_MOUSE_POS):
                     music_volume = min(music_volume + 0.1, 1.0)
                     pygame.mixer.music.set_volume(music_volume)
@@ -1104,6 +1090,50 @@ def options():
                     sfx_volume = min(sfx_volume + 0.1, 1.0)
                 if SFX_VOL_DOWN.checkForInput(OPTIONS_MOUSE_POS):
                     sfx_volume = max(sfx_volume - 0.1, 0.0)
+        
+        pygame.display.update()
+
+def how_to_play():
+    play_music(main_menu_music)
+    while True:
+        HOW_TO_PLAY_MOUSE_POS = pygame.mouse.get_pos()
+        SCREEN.fill("white")
+        
+        HOW_TO_PLAY_TEXT = get_font(45).render("HOW TO PLAY", True, "Black")
+        HOW_TO_PLAY_RECT = HOW_TO_PLAY_TEXT.get_rect(center=(640, 100))
+        SCREEN.blit(HOW_TO_PLAY_TEXT, HOW_TO_PLAY_RECT)
+        
+        # Instruções de como jogar
+        instructions = [
+            "Use the arrow keys to move the player:",
+            "LEFT ARROW: Move left",
+            "RIGHT ARROW: Move right",
+            "UP ARROW: Jump",
+            "DOWN ARROW: Slide",
+            "",
+            "Collect coins to increase your score.",
+            "Avoid obstacles to stay in the game.",
+            "",
+            "Press ESC to pause or resume the game."
+        ]
+        
+        for i, line in enumerate(instructions):
+            instruction_text = get_font(30).render(line, True, "Black")
+            instruction_rect = instruction_text.get_rect(center=(640, 200 + i * 40))
+            SCREEN.blit(instruction_text, instruction_rect)
+        
+        HOW_TO_PLAY_BACK = Button(image=None, pos=(640, 660), 
+                                  text_input="BACK", font=get_font(75), base_color="Black", hovering_color="Green")
+        HOW_TO_PLAY_BACK.changeColor(HOW_TO_PLAY_MOUSE_POS)
+        HOW_TO_PLAY_BACK.update(SCREEN)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if HOW_TO_PLAY_BACK.checkForInput(HOW_TO_PLAY_MOUSE_POS):
+                    options()
         
         pygame.display.update()
 
