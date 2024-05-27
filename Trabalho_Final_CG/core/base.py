@@ -10,7 +10,7 @@ class Base:
         # Initialize all pygame modules
         pygame.init()
         # Indicate rendering details
-        display_flags = pygame.DOUBLEBUF | pygame.OPENGL
+        display_flags = pygame.DOUBLEBUF | pygame.OPENGL | pygame.FULLSCREEN 
         # Initialize buffers to perform antialiasing
         pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLEBUFFERS, 1)
         pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLESAMPLES, 4)

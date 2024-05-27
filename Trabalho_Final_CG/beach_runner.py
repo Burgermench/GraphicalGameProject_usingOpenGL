@@ -5,6 +5,7 @@ import time
 import cv2
 import threading
 import queue
+from screeninfo import get_monitors
 
 from pygame.locals import *
 from random import randint, choice
@@ -43,11 +44,22 @@ from core.matrix import *
 from button import Button
 
 pygame.init()
-pygame.display.set_mode((800, 600), pygame.DOUBLEBUF | pygame.OPENGL)
+
+info = pygame.display.Info()
+print(info.current_w)
+print(info.current_h)
+
+for monitor in get_monitors():
+    screen_width = monitor.width
+    screen_height = monitor.height
+
+#for monitor in get_monitors():
+#    pygame.display.set_mode((info.current_w, info.current_h), pygame.DOUBLEBUF | pygame.OPENGL, pygame.FULLSCREEN)
 pygame.mixer.init()
 
-SCREEN_SIZE = (1280, 720)
-SCREEN = pygame.display.set_mode(SCREEN_SIZE)
+
+SCREEN_SIZE = (screen_width, screen_height)
+SCREEN = pygame.display.set_mode(SCREEN_SIZE,  pygame.DOUBLEBUF | pygame.FULLSCREEN)
 pygame.display.set_caption("Beach Runner")
 
 BG = pygame.image.load("assets/praia.jpg")
@@ -622,7 +634,7 @@ class Example(Base):
         pygame.display.quit()
         pygame.display.init()
         global SCREEN
-        SCREEN = pygame.display.set_mode(SCREEN_SIZE)
+        SCREEN = pygame.display.set_mode(SCREEN_SIZE, pygame.FULLSCREEN)
     pygame.display.set_caption("Beach Runner")
 
     def show_game_over_menu(self):
@@ -631,7 +643,6 @@ class Example(Base):
         play_music(game_over_menu_music)
     
         def get_position(index):
-            screen_width, screen_height = SCREEN.get_size()
         
             # Calculate the spacing and positions
             total_elements = 6  # Number of text and buttons
@@ -732,16 +743,16 @@ class Example(Base):
                 color_change_time = current_time
             
             CONGRATULATIONS_TEXT = get_title_font_ingame(100).render("CONGRATULATIONS", True, colors[color_index])
-            CONGRATULATIONS_RECT = CONGRATULATIONS_TEXT.get_rect(center=(640, 200))
+            CONGRATULATIONS_RECT = CONGRATULATIONS_TEXT.get_rect(center=(screen_width/2, 200))
             SCREEN.blit(CONGRATULATIONS_TEXT, CONGRATULATIONS_RECT)
 
             NEW_HIGH_SCORE_TEXT = get_font_ingame(50).render("New High Score: " + str(self.points), True, "Yellow")
-            NEW_HIGH_SCORE_RECT = NEW_HIGH_SCORE_TEXT.get_rect(center=(640, 300))
+            NEW_HIGH_SCORE_RECT = NEW_HIGH_SCORE_TEXT.get_rect(center=(screen_width/2, 300))
             SCREEN.blit(NEW_HIGH_SCORE_TEXT, NEW_HIGH_SCORE_RECT)
 
-            RESTART_BUTTON = Button(image=pygame.image.load("../../assets/Play Rect.png"), pos=(640, 450), 
+            RESTART_BUTTON = Button(image=pygame.image.load("../../assets/Play Rect.png"), pos=(screen_width/2, 450), 
                             text_input="RESTART",font=get_font_ingame(75), base_color="#d7fcd4", hovering_color="Blue")
-            QUIT_BUTTON = Button(image=pygame.image.load("../../assets/Quit Rect.png"), pos=(640, 600), 
+            QUIT_BUTTON = Button(image=pygame.image.load("../../assets/Quit Rect.png"), pos=(screen_width/2, 600), 
                             text_input="QUIT", font=get_font_ingame(75), base_color="#d7fcd4", hovering_color="Blue")
 
             for button in [RESTART_BUTTON, QUIT_BUTTON]:
@@ -1114,12 +1125,12 @@ def options():
         OPTIONS_MOUSE_POS = pygame.mouse.get_pos()
         SCREEN.fill("white")
         OPTIONS_TEXT = get_font(45).render("This is the OPTIONS screen.", True, "Black")
-        OPTIONS_RECT = OPTIONS_TEXT.get_rect(center=(640, 260))
+        OPTIONS_RECT = OPTIONS_TEXT.get_rect(center=(screen_width/2, 260))
         SCREEN.blit(OPTIONS_TEXT, OPTIONS_RECT)
 
-        OPTIONS_BACK = Button(image=None, pos=(640, 660), 
+        OPTIONS_BACK = Button(image=None, pos=(screen_width/2, 660), 
                               text_input="BACK", font=get_font(75), base_color="Black", hovering_color="Green")
-        HOW_TO_PLAY_BUTTON = Button(image=None, pos=(640, 570), 
+        HOW_TO_PLAY_BUTTON = Button(image=None, pos=(screen_width/2, 570), 
                                     text_input="HOW TO PLAY", font=get_font(45), base_color="Black", hovering_color="Green")
 
         OPTIONS_BACK.changeColor(OPTIONS_MOUSE_POS)
@@ -1128,12 +1139,12 @@ def options():
         HOW_TO_PLAY_BUTTON.update(SCREEN)
         
         # Music Volume Controls
-        MUSIC_VOL_UP = Button(image=None, pos=(900, 400), text_input="MUSIC VOL +", font=get_font(45), base_color="Black", hovering_color="Green")
-        MUSIC_VOL_DOWN = Button(image=None, pos=(350, 400), text_input="MUSIC VOL -", font=get_font(45), base_color="Black", hovering_color="Green")
+        MUSIC_VOL_UP = Button(image=None, pos=(screen_width/2 +500, 400), text_input="MUSIC VOL +", font=get_font(45), base_color="Black", hovering_color="Green")
+        MUSIC_VOL_DOWN = Button(image=None, pos=(screen_width/2-500, 400), text_input="MUSIC VOL -", font=get_font(45), base_color="Black", hovering_color="Green")
         
         # Sound Effects Volume Controls
-        SFX_VOL_UP = Button(image=None, pos=(900, 500), text_input="SFX VOL +", font=get_font(45), base_color="Black", hovering_color="Green")
-        SFX_VOL_DOWN = Button(image=None, pos=(350, 500), text_input="SFX VOL -", font=get_font(45), base_color="Black", hovering_color="Green")
+        SFX_VOL_UP = Button(image=None, pos=(screen_width/2 + 500, 500), text_input="SFX VOL +", font=get_font(45), base_color="Black", hovering_color="Green")
+        SFX_VOL_DOWN = Button(image=None, pos=(screen_width/2 - 500, 500), text_input="SFX VOL -", font=get_font(45), base_color="Black", hovering_color="Green")
 
         for button in [OPTIONS_BACK,HOW_TO_PLAY_BUTTON, MUSIC_VOL_UP, MUSIC_VOL_DOWN, SFX_VOL_UP, SFX_VOL_DOWN]:
             button.changeColor(OPTIONS_MOUSE_POS)
@@ -1168,7 +1179,7 @@ def how_to_play():
         SCREEN.fill("white")
         
         HOW_TO_PLAY_TEXT = get_font(45).render("HOW TO PLAY", True, "Black")
-        HOW_TO_PLAY_RECT = HOW_TO_PLAY_TEXT.get_rect(center=(640, 100))
+        HOW_TO_PLAY_RECT = HOW_TO_PLAY_TEXT.get_rect(center=(screen_width/2, 100))
         SCREEN.blit(HOW_TO_PLAY_TEXT, HOW_TO_PLAY_RECT)
         
         # Instruções de como jogar
@@ -1186,10 +1197,10 @@ def how_to_play():
         
         for i, line in enumerate(instructions):
             instruction_text = get_font(30).render(line, True, "Black")
-            instruction_rect = instruction_text.get_rect(center=(640, 200 + i * 40))
+            instruction_rect = instruction_text.get_rect(center=(screen_width/2, 200 + i * 40))
             SCREEN.blit(instruction_text, instruction_rect)
         
-        HOW_TO_PLAY_BACK = Button(image=None, pos=(640, 660), 
+        HOW_TO_PLAY_BACK = Button(image=None, pos=(screen_width/2, 660), 
                                   text_input="BACK", font=get_font(75), base_color="Black", hovering_color="Green")
         HOW_TO_PLAY_BACK.changeColor(HOW_TO_PLAY_MOUSE_POS)
         HOW_TO_PLAY_BACK.update(SCREEN)
@@ -1210,13 +1221,13 @@ def main_menu():
         SCREEN.blit(BG, (0, 0))
         MENU_MOUSE_POS = pygame.mouse.get_pos()
         MENU_TEXT = get_title_font(100).render("Beach Runner!!!", True, "#b68f40")
-        MENU_RECT = MENU_TEXT.get_rect(center=(640, 100))
+        MENU_RECT = MENU_TEXT.get_rect(center=(screen_width/2, 100))
 
-        PLAY_BUTTON = Button(image=pygame.image.load("assets/Play Rect.png"), pos=(640, 250), 
+        PLAY_BUTTON = Button(image=pygame.image.load("assets/Play Rect.png"), pos=(screen_width/2, 400), 
                             text_input="PLAY", font=get_font(75), base_color="#d7fcd4", hovering_color="Blue")
-        OPTIONS_BUTTON = Button(image=pygame.image.load("assets/Options Rect.png"), pos=(640, 400), 
+        OPTIONS_BUTTON = Button(image=pygame.image.load("assets/Options Rect.png"), pos=(screen_width/2, 550), 
                             text_input="OPTIONS", font=get_font(75), base_color="#d7fcd4", hovering_color="Blue")
-        QUIT_BUTTON = Button(image=pygame.image.load("assets/Quit Rect.png"), pos=(640, 550), 
+        QUIT_BUTTON = Button(image=pygame.image.load("assets/Quit Rect.png"), pos=(screen_width/2, 700), 
                             text_input="QUIT", font=get_font(75), base_color="#d7fcd4", hovering_color="Blue")
 
         SCREEN.blit(MENU_TEXT, MENU_RECT)
@@ -1224,7 +1235,7 @@ def main_menu():
         for button in [PLAY_BUTTON, OPTIONS_BUTTON, QUIT_BUTTON]:
             button.changeColor(MENU_MOUSE_POS)
             button.update(SCREEN)
-
+        
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -1232,7 +1243,7 @@ def main_menu():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if PLAY_BUTTON.checkForInput(MENU_MOUSE_POS):
                     stop_music()
-                    Example(screen_size=[1280, 800]).run()
+                    Example(screen_size=[screen_width, screen_height]).run()
                 if OPTIONS_BUTTON.checkForInput(MENU_MOUSE_POS):
                     options()
                 if QUIT_BUTTON.checkForInput(pygame.mouse.get_pos()):
